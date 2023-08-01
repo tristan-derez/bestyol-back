@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-1.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Users {
+  id          Int           @id @default(autoincrement())
+  pp          String?
+  banner      String?
+  email       String        @unique
+  password    String
+  username    String        @unique
+  UserSuccess UserSuccess[]
+  UserTasks   UserTasks[]
+  Yol         Yol[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime?     @updatedAt
+}
+
+model Yol {
+  id         Int           @id @default(autoincrement())
+  name       String
+  xp         Int
+  userId     Int
+  speciesId  Int
+  species    Species       @relation(fields: [speciesId], references: [id])
+  user       Users         @relation(fields: [userId], references: [id])
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime?     @updatedAt
+}
+
+model Species {
+  id         Int           @id @default(autoincrement())
+  name       String
+  image      String
+  stage      String
+  gif        String
+  Yol        Yol[]
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime?      @updatedAt
+}
+
+model Success {
+  id           Int           @id @default(autoincrement())
+  title        String        @unique
+  image        String?
+  description  String
+  amountNeeded Int
+  successXp    Int
+  type         String
+  UserSuccess  UserSuccess[]
+  dailyTask    DailyTasks?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime?     @updatedAt
+}
+
+model UserSuccess {
+  id           Int           @id @default(autoincrement())
+  actualAmount Int
+  isCompleted  Boolean
+  userId       Int
+  successId    Int
+  success      Success       @relation(fields: [successId], references: [id])
+  user         Users         @relation(fields: [userId], references: [id])
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime?     @updatedAt
+}
+
+model DailyTasks {
+  id               Int           @id @default(autoincrement())
+  category         String?
+  title            String        @unique
+  difficulty       Int
+  xp               Int
+  isActive         Boolean?
+  image            String?
+  lastAssignDate   DateTime?
+  userTasks        UserTasks[]
+  successId        Int?          @unique
+  success          Success?      @relation(fields: [successId], references: [id])
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime?     @updatedAt
+}
+
+model UserTasks {
+  id          Int           @id @default(autoincrement())
+  title       String
+  isDaily     Boolean
+  isCompleted Boolean
+  completedAt DateTime?
+  userId      Int
+  dailyTaskId Int?
+  dailyTask   DailyTasks?   @relation(fields: [dailyTaskId], references: [id])
+  user        Users         @relation(fields: [userId], references: [id])
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime?     @updatedAt
+}
