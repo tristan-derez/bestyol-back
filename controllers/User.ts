@@ -176,6 +176,7 @@ export const getUser = async (req: AuthenticatedRequest, res: Response) => {
 };
 
 //* PATCH
+// todo: find a way to show every error if there's multiple errors message
 export const editUsernameOrEmail = async (req: Request, res: Response) => {
     const userId: string = req.params.userId;
     const { username, email } = req.body;
