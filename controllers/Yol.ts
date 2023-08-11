@@ -1,321 +1,474 @@
 import { Request, Response } from "express";
-import { prisma } from "../utils/prismaClient";
+import { startOfDay, endOfDay } from "date-fns";
+import { newActiveDaily } from "../utils/switchActiveStatus";
+import { AuthenticatedRequest } from "../middlewares/idValidation";
 
-import { incrementEvolveSuccess } from "../utils/incrementEvolveSuccess";
+import { prisma, DailyTasks, UserTasks } from "../utils/prismaClient";
 
 //* POST
-export const createYol = async (req: Request, res: Response) => {
-    const { name, userId, speciesId }: { name: string; userId: number; speciesId: number } = req.body;
+export const createUserCustomTask = async (req: AuthenticatedRequest, res: Response) => {
+    const userId: string = req.params.userId;
+    const { title }: { title: string } = req.body;
 
-    if (!name || !userId || !speciesId) {
-        return res.status(400).json({
-            erreur: "Certains champs requis sont absents du corps de la requête",
-            example: {
-                name: "Pierre",
-                userId: 327,
-                speciesId: 3,
-            },
-        });
+    if (isNaN(parseInt(userId, 10))) {
+        return res.status(400).json({ erreur: "Le paramètre userId doit être un nombre valide" });
+    }
+
+    if (!title) {
+        return res.status(400).json({ erreur: "le titre de la tâche est absent du corps de la requête" });
     }
 
     try {
-        const yol = await prisma.yol.create({
+        const userTask = await prisma.userTasks.create({
             data: {
-                name: req.body.name,
-                xp: 0,
-                userId: req.body.userId,
-                speciesId: req.body.speciesId,
-            },
-            include: {
-                species: true,
+                title,
+                isDaily: false,
+                isCompleted: false,
+                completedAt: null,
+                createdAt: new Date(),
+                userId: parseInt(userId, 10),
+                dailyTaskId: null,
             },
         });
 
-        return res.status(200).json({ yol });
+        return res.status(201).json({ userTask, message: "Tâche créée 🥳🎉" });
     } catch (error: any) {
-        return res.status(404).json({ erreur: error });
+        return res.status(500).json({ erreur: "Erreur lors de la création de la tâche 😕", error });
+    }
+};
+
+export const createUserDailyTasks = async (req: AuthenticatedRequest, res: Response) => {
+    const userId: string = req.params.userId;
+
+    if (isNaN(parseInt(userId, 10))) {
+        res.status(400).json({ erreur: "Le paramètre userId doit être un nombre valide" });
+        return;
+    }
+
+    const today: Date = new Date();
+    const startOfToday: number | Date = startOfDay(today);
+    const endOfToday: number | Date = endOfDay(today);
+
+    try {
+        const existingDailyTasks = await prisma.userTasks.findFirst({
+            where: {
+                userId: parseInt(userId, 10),
+                isDaily: true,
+                createdAt: {
+                    gte: startOfToday,
+                    lte: endOfToday,
+                },
+            },
+        });
+
+        if (existingDailyTasks) {
+            res.status(500).json({ erreur: "L'utilisateur a déjà des tâches quotidiennes pour cette date 😕" });
+            return;
+        }
+
+        const expiredDailytasks = await prisma.userTasks.findFirst({
+            where: {
+                userId: parseInt(userId, 10),
+                isDaily: true,
+                createdAt: {
+                    lt: startOfToday,
+                },
+            },
+        });
+
+        if (expiredDailytasks) {
+            const incompleteTasks = await prisma.userTasks.findMany({
+                where: {
+                    userId: parseInt(userId, 10),
+                    isDaily: true,
+                    isCompleted: false,
+                    createdAt: {
+                        lt: startOfToday,
+                    },
+                },
+            });
+
+            if (incompleteTasks.length > 0) {
+                await prisma.userTasks.deleteMany({
+                    where: {
+                        userId: parseInt(userId, 10),
+                        isDaily: true,
+                        isCompleted: false,
+                        createdAt: {
+                            lt: startOfToday,
+                        },
+                    },
+                });
+            }
+        }
+
+        await newActiveDaily(6);
+
+        const tasks: DailyTasks[] = await prisma.dailyTasks.findMany({
+            where: {
+                isActive: true,
+            },
+        });
+
+        const userTasks: UserTasks[] = [];
+
+        for (const task of tasks) {
+            const userTask: UserTasks = await prisma.userTasks.create({
+                data: {
+                    title: task.title,
+                    isDaily: true,
+                    isCompleted: false,
+                    completedAt: null,
+                    userId: parseInt(userId, 10),
+                    dailyTaskId: task.id,
+                },
+                include: {
+                    dailyTask: true,
+                },
+            });
+
+            userTasks.push(userTask);
+        }
+
+        res.status(200).json({ userTasks, message: "Tâches quotidiennes assignées 🥳🎉" });
+    } catch (error: any) {
+        res.status(500).json({ erreur: error });
     }
 };
 
 //* GET
-export const getOneYol = async (req: Request, res: Response) => {
-    const yolId: string = req.params.yolId;
-
-    if (!yolId) {
-        return res.status(400).json({ erreur: "yolId est absent des paramètres de la requête" });
-    }
-
-    if (isNaN(parseInt(yolId, 10))) {
-        return res.status(400).json({ erreur: "yolId doit être un nombre valide" });
-    }
-
-    try {
-        const yol = await prisma.yol.findUnique({
-            where: {
-                id: parseInt(yolId, 10),
-            },
-            include: {
-                species: true,
-            },
-        });
-
-        return res.status(200).json({ yol });
-    } catch (error: any) {
-        return res.status(404).json({ erreur: error });
-    }
-};
-
-export const getOneYolByUserId = async (req: Request, res: Response) => {
+export const getUserTasks = async (req: AuthenticatedRequest, res: Response) => {
     const userId: string = req.params.userId;
-    const xpToReachLevelThree = 250;
-    const xpToReachLevelTen = 2700;
-    const xpToReachLevelTwenty = 10450;
-
-    if (!userId) {
-        res.status(400).json({ erreur: "userId est absent des paramètres de la requête" });
-        return;
-    }
 
     if (isNaN(parseInt(userId, 10))) {
-        res.status(400).json({ erreur: "yolId doit être un nombre valide" });
+        res.status(400).json({ erreur: "Le paramètre userId doit être un nombre valide" });
         return;
     }
 
     try {
-        const yol = await prisma.yol.findMany({
+        const userTasks: UserTasks[] = await prisma.userTasks.findMany({
             where: {
                 userId: parseInt(userId, 10),
             },
             include: {
-                species: true,
+                dailyTask: true,
             },
         });
 
-        if (yol.length === 0) {
-            return res.status(200).json({ message: "Cet utilisateur ne possède pas de Yol !" });
-        }
+        const customTasks: UserTasks[] = [];
+        const dailyTasks: UserTasks[] = [];
 
-        if (yol[0].xp >= xpToReachLevelThree) {
-            const yolLevelThree = await prisma.userSuccess.findFirst({
-                where: {
-                    userId: parseInt(userId, 10),
-                    successId: 17,
-                },
-            });
-
-            if (yolLevelThree) {
-                await prisma.userSuccess.update({
-                    where: {
-                        id: yolLevelThree.id,
-                    },
-                    data: {
-                        actualAmount: {
-                            increment: 1,
-                        },
-                    },
-                });
+        userTasks.forEach((task: UserTasks) => {
+            if (task.isDaily) {
+                dailyTasks.push(task);
+            } else {
+                customTasks.push(task);
             }
-        } else if (yol[0].xp >= xpToReachLevelTen) {
-            const yolLevelTen = await prisma.userSuccess.findFirst({
-                where: {
-                    userId: parseInt(userId, 10),
-                    successId: 18,
-                },
-            });
+        });
 
-            if (yolLevelTen) {
-                await prisma.userSuccess.update({
-                    where: {
-                        id: yolLevelTen.id,
-                    },
-                    data: {
-                        actualAmount: {
-                            increment: 1,
-                        },
-                    },
-                });
-            }
-        } else if (yol[0].xp >= xpToReachLevelTwenty) {
-            const yolLevelTwenty = await prisma.userSuccess.findFirst({
-                where: {
-                    userId: parseInt(userId, 10),
-                    successId: 19,
-                },
-            });
-
-            if (yolLevelTwenty) {
-                await prisma.userSuccess.update({
-                    where: {
-                        id: yolLevelTwenty.id,
-                    },
-                    data: {
-                        actualAmount: {
-                            increment: 1,
-                        },
-                    },
-                });
-            }
-        }
-
-        return res.status(200).json(yol[0]);
+        res.status(200).json({ customTasks, dailyTasks });
     } catch (error: any) {
-        return res.status(500).json({ erreur: error });
+        res.status(500).json({
+            erreur: "Une erreur est survenue lors de la récupération des tâches de l'utilisateur 😕",
+            error,
+        });
     }
 };
 
 //* PATCH
-export const evolve = async (req: Request, res: Response) => {
-    const yolId: string = req.params.yolId;
+export const changeTitleCustomTask = async (req: Request, res: Response) => {
+    const taskId: string = req.params.taskId;
+    const { title }: { title: string } = req.body;
 
-    if (!yolId) {
-        res.status(400).json({ details: "yolId est absent des paramètres de la requête" });
+    if (isNaN(parseInt(taskId, 10))) {
+        res.status(400).json({ erreur: "Le paramètre taskId doit être un nombre valide" });
         return;
     }
 
-    if (isNaN(parseInt(yolId, 10))) {
-        res.status(400).json({ details: "yolId doit être un nombre valide" });
+    if (!title) {
+        res.status(400).json({ erreur: "le titre de la tâche est absent du corps de la requête" });
         return;
     }
 
     try {
-        const yolInfo = await prisma.yol.findFirst({
+        const updatedTask = await prisma.userTasks.update({
             where: {
-                id: parseInt(yolId, 10),
+                id: parseInt(taskId, 10),
             },
-            include: {
-                species: true,
+            data: {
+                title: title,
             },
         });
 
-        switch (yolInfo?.species.stage) {
-            case "Egg":
-                if (yolInfo.xp >= 100) {
-                    const matchingSpeciesBabyStage = await prisma.species.findFirst({
-                        where: {
-                            name: yolInfo?.species.name,
-                            stage: "Baby",
+        res.status(200).json({ updatedTask, message: "Tâche modifiée 🥳🎉" });
+    } catch (error: any) {
+        res.status(500).json({ erreur: "Erreur lors du changement de titre 😕", error });
+    }
+};
+
+export const validateDailyTask = async (req: Request, res: Response) => {
+    const userTaskId: string = req.params.userTaskId;
+    const { yolId }: { yolId: number } = req.body;
+
+    const today = new Date();
+    const startOfToday = startOfDay(today);
+    const endOfToday = endOfDay(today);
+
+    if (isNaN(yolId)) {
+        return res.status(400).json({ erreur: "yolId doit être un nombre valide" });
+    }
+
+    if (isNaN(parseInt(userTaskId, 10))) {
+        return res.status(400).json({ erreur: "Le paramètre userTaskId doit être un nombre valide" });
+    }
+
+    if (!yolId) {
+        return res.status(400).json({ erreur: "yolId est absent du corps de la requête" });
+    }
+
+    try {
+        const userTask = await prisma.userTasks.findUnique({
+            where: {
+                id: parseInt(userTaskId, 10),
+            },
+            include: {
+                dailyTask: true,
+            },
+        });
+
+        if (!userTask) {
+            return res.status(404).json({ error: "Tâche non trouvée 😕" });
+        }
+
+        await prisma.yol.update({
+            where: {
+                id: yolId,
+            },
+            data: {
+                xp: {
+                    increment: userTask?.dailyTask?.xp,
+                },
+            },
+        });
+
+        const successId: number | null | undefined = userTask?.dailyTask?.successId;
+        const userId = userTask?.userId;
+
+        if (successId !== null) {
+            const userSuccessToIncrement = await prisma.userSuccess.findFirst({
+                where: {
+                    successId: successId as number,
+                    isCompleted: false,
+                    userId: userId,
+                },
+            });
+
+            if (userSuccessToIncrement) {
+                await prisma.userSuccess.update({
+                    where: {
+                        id: userSuccessToIncrement.id,
+                    },
+                    data: {
+                        actualAmount: {
+                            increment: 1,
                         },
-                    });
+                    },
+                });
+            }
 
-                    if (matchingSpeciesBabyStage === null) {
-                        throw Object.assign(new Error(), { details: "Espèce de l'évolution introuvable" });
-                    }
+            const questMasterSuccess = await prisma.userSuccess.findFirst({
+                where: {
+                    userId: userId,
+                    successId: 14,
+                },
+            });
 
-                    const yolBaby = await prisma.yol.update({
-                        where: {
-                            id: parseInt(yolId, 10),
+            if (questMasterSuccess) {
+                await prisma.userSuccess.update({
+                    where: {
+                        id: questMasterSuccess.id,
+                    },
+                    data: {
+                        actualAmount: {
+                            increment: 1,
                         },
-                        data: {
-                            speciesId: matchingSpeciesBabyStage?.id,
+                    },
+                });
+            }
+        }
+
+        const updatedTask = await prisma.userTasks.update({
+            where: {
+                id: userTask?.id,
+            },
+            data: {
+                isCompleted: true,
+                completedAt: new Date(),
+            },
+        });
+
+        const searchForEveryDaily = await prisma.userTasks.findMany({
+            where: {
+                userId: userId,
+                isDaily: true,
+                createdAt: {
+                    gte: startOfToday,
+                    lte: endOfToday,
+                },
+                isCompleted: true,
+            },
+        });
+
+        if (searchForEveryDaily.length === 6) {
+            const userSuccessToUpdate = await prisma.userSuccess.findFirst({
+                where: {
+                    userId: userId,
+                    successId: 16,
+                },
+            });
+
+            if (userSuccessToUpdate) {
+                await prisma.userSuccess.update({
+                    where: {
+                        id: userSuccessToUpdate.id,
+                    },
+                    data: {
+                        actualAmount: {
+                            increment: 1,
                         },
-                        include: {
-                            species: true,
+                    },
+                });
+            }
+        }
+
+        return res.status(200).json({ message: "Tâche validée 🥳🎉", yolXpGain: userTask?.dailyTask?.xp, updatedTask });
+    } catch (error: any) {
+        return res.status(500).json({ error });
+    }
+};
+
+export const validateCustomTask = async (req: Request, res: Response) => {
+    const userTaskId: string = req.params.userTaskId;
+
+    if (isNaN(parseInt(userTaskId, 10))) {
+        res.status(400).json({ erreur: "Le paramètre userTaskId doit être un nombre valide" });
+        return;
+    }
+
+    try {
+        const userTask = await prisma.userTasks.findUnique({
+            where: {
+                id: parseInt(userTaskId, 10),
+            },
+        });
+
+        if (!userTask) {
+            return res.status(404).json({ error: "Tâche non trouvée 😕" });
+        }
+
+        if (!userTask.isDaily) {
+            if (userTask.isCompleted) {
+                return res.status(400).json({ error: "Tâche déjà complétée" });
+            }
+
+            const firstTimeCompletingCustomTask = await prisma.userTasks.count({
+                where: {
+                    userId: userTask.userId,
+                    isDaily: false,
+                    isCompleted: true,
+                },
+            });
+
+            if (firstTimeCompletingCustomTask !== 0) {
+                await prisma.userTasks.update({
+                    where: {
+                        id: parseInt(userTaskId, 10),
+                    },
+                    data: {
+                        isCompleted: true,
+                    },
+                });
+
+                return res.status(200).json({ message: "Tâche complétée" });
+            } else {
+                const successId: number = 15;
+                const successToValidate = await prisma.userSuccess.findFirst({
+                    where: {
+                        successId: successId,
+                        userId: userTask.userId,
+                    },
+                });
+
+                await prisma.userSuccess.update({
+                    where: {
+                        id: successToValidate?.id,
+                    },
+                    data: {
+                        actualAmount: {
+                            increment: 1,
                         },
-                    });
+                    },
+                });
 
-                    await incrementEvolveSuccess(yolInfo.userId, "Egg");
-
-                    return res.status(200).json({ message: "Votre Yol a éclos !", newSpecies: yolBaby.species });
-                } else {
-                    throw Object.assign(new Error(), {
-                        status: 400,
-                        details: "Le Yol n'a pas l'xp requise pour évoluer",
-                        xpNeeded: 100,
-                        xpYol: yolInfo?.xp,
-                    });
-                }
-
-            case "Baby":
-                if (yolInfo.xp >= 700) {
-                    const matchingSpeciesAdolescentStage = await prisma.species.findFirst({
-                        where: {
-                            name: yolInfo?.species.name,
-                            stage: "Adolescent",
-                        },
-                    });
-
-                    if (matchingSpeciesAdolescentStage === null) {
-                        throw Object.assign(new Error(), { details: "Espèce de l'évolution introuvable" });
-                    }
-
-                    const yolAdo = await prisma.yol.update({
-                        where: {
-                            id: parseInt(yolId, 10),
-                        },
-                        data: {
-                            speciesId: matchingSpeciesAdolescentStage?.id,
-                        },
-                        include: {
-                            species: true,
-                        },
-                    });
-
-                    await incrementEvolveSuccess(yolInfo.userId, "Baby");
-
-                    return res.status(200).json({ message: "Votre Yol est passé au stade d'adolescent !", newSpecies: yolAdo.species });
-                } else {
-                    throw Object.assign(new Error(), {
-                        status: 400,
-                        details: "Le Yol n'a pas l'xp requise pour évoluer",
-                        xpNeeded: 700,
-                        xpYol: yolInfo?.xp,
-                    });
-                }
-
-            case "Adolescent":
-                if (yolInfo.xp >= 1750) {
-                    const matchingSpeciesFinalStage = await prisma.species.findFirst({
-                        where: {
-                            name: yolInfo?.species.name,
-                            stage: "Final",
-                        },
-                    });
-
-                    if (matchingSpeciesFinalStage === null) {
-                        throw Object.assign(new Error(), { details: "Espèce de l'évolution introuvable" });
-                    }
-
-                    const yolFinal = await prisma.yol.update({
-                        where: {
-                            id: parseInt(yolId, 10),
-                        },
-                        data: {
-                            speciesId: matchingSpeciesFinalStage?.id,
-                        },
-                        include: {
-                            species: true,
-                        },
-                    });
-
-                    await incrementEvolveSuccess(yolInfo.userId, "Adolescent");
-
-                    return res.status(200).json({ message: "Votre Yol est passé au stade final !", newSpecies: yolFinal.species });
-                } else {
-                    throw Object.assign(new Error(), {
-                        status: 400,
-                        details: "Le Yol n'a pas l'xp requise pour évoluer",
-                        xpNeeded: 1750,
-                        xpYol: yolInfo?.xp,
-                    });
-                }
-
-            case "Final":
-                res.status(400).json({ details: "Votre Yol est au stade final, il ne peut plus évoluer !" });
-                break;
-
-            default:
-                return;
+                await prisma.userTasks.update({
+                    where: {
+                        id: parseInt(userTaskId, 10),
+                    },
+                    data: {
+                        isCompleted: true,
+                    },
+                });
+                return res.status(200).json({ message: "Tâche complétée" });
+            }
+        } else {
+            return res.status(400).json({ error: "Requête invalide" });
         }
     } catch (error: any) {
-        console.log(error.message);
-        const { status, ...errorWithoutStatus } = error;
-        return res.status(error.status || 500).json(errorWithoutStatus);
+        return res.status(500).json({ error: error });
+    }
+};
+
+//* DELETE
+export const deleteCustomTask = async (req: Request, res: Response) => {
+    const taskId: string = req.params.taskId;
+
+    if (isNaN(parseInt(taskId, 10))) {
+        res.status(400).json({ erreur: "Le paramètre taskId doit être un nombre valide" });
+        return;
+    }
+
+    try {
+        const task = await prisma.userTasks.findUnique({
+            where: {
+                id: parseInt(taskId, 10),
+            },
+        });
+
+        if (task?.isDaily === true) {
+            throw Object.assign(new Error(), {
+                status: 401,
+                details: "La tâche utilisateur est une tâche quotidienne et ne peut pas être supprimée de cette manière",
+            });
+        }
+
+        await prisma.userTasks.delete({
+            where: {
+                id: parseInt(taskId, 10),
+            },
+        });
+
+        res.status(200).json({ message: "Tâche supprimée 🔫", task });
+    } catch (error: any) {
+        res.status(500).json({ erreur: "Erreur lors de la suppression de la tâche 😕", error });
     }
 };
 
 export default {
-    createYol,
-    getOneYol,
-    getOneYolByUserId,
-    evolve,
+    createUserCustomTask,
+    createUserDailyTasks,
+    getUserTasks,
+    changeTitleCustomTask,
+    deleteCustomTask,
+    validateDailyTask,
+    validateCustomTask,
 };

@@ -297,27 +297,6 @@ export const validateDailyTask = async (req: Request, res: Response) => {
             }
         }
 
-        // global success for dailytasks
-        const userSuccessToIncrement = await prisma.userSuccess.findFirst({
-            where: {
-                userId: 1,
-                successId: 1,
-            },
-        });
-
-        if (userSuccessToIncrement !== null) {
-            await prisma.userSuccess.update({
-                where: {
-                    id: userSuccessToIncrement?.id as number,
-                },
-                data: {
-                    actualAmount: {
-                        increment: 1,
-                    },
-                },
-            });
-        }
-
         const updatedTask = await prisma.userTasks.update({
             where: {
                 id: userTask?.id,
