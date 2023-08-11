@@ -1,5 +1,5 @@
 import express, { Router } from "express";
-import authToken from "../middlewares/authToken";
+import authToken from "../middlewares/verifyAuthToken";
 import idValidation from "../middlewares/idValidation";
 import validateSchema from "../middlewares/validateSchema";
 
