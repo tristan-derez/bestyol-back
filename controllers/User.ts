@@ -139,6 +139,7 @@ export const refreshAccessToken = async (req: Request, res: Response) => {
         }
 
         const refreshedToken = await generateAccessToken(parseInt(userId, 10));
+
         res.status(200).send({ accessToken: refreshedToken });
     } catch (error: any) {
         return res.status(error.status || 500).json({ erreur: error.message || "Erreur interne" });
