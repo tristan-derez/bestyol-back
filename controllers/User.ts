@@ -71,14 +71,14 @@ export const login = async (req: Request, res: Response) => {
 
     const normalizedUsername: string = username.toLowerCase();
 
-    if (!username || !password) {
-        throw Object.assign(new Error(), {
-            status: 400,
-            message: "Username et/ou mot de passe absent(s) de la requête",
-        });
-    }
-
     try {
+        if (!username || !password) {
+            throw Object.assign(new Error(), {
+                status: 400,
+                message: "Username et/ou mot de passe absent(s) de la requête",
+            });
+        }
+
         const user = await prisma.users.findUnique({
             where: { username: normalizedUsername },
             select: {
@@ -157,14 +157,21 @@ export const refreshAccessToken = async (req: Request, res: Response) => {
 export const getUser = async (req: AuthenticatedRequest, res: Response) => {
     const userId: string = req.params.userId;
 
-    if (isNaN(parseInt(userId, 10))) {
-        throw Object.assign(new Error(), {
-            status: 400,
-            message: "Le paramètre userId doit être un nombre valide",
-        });
-    }
-
     try {
+        if (!userId) {
+            throw Object.assign(new Error(), {
+                status: 400,
+                message: "Le paramètre userId est absent du corps de la requête",
+            });
+        }
+
+        if (isNaN(parseInt(userId, 10))) {
+            throw Object.assign(new Error(), {
+                status: 400,
+                message: "Le paramètre userId doit être un nombre valide",
+            });
+        }
+
         const user = await prisma.users.findUnique({
             where: { id: parseInt(userId, 10) },
             select: { id: true, pp: true, banner: true, email: true, username: true, createdAt: true },
@@ -189,32 +196,39 @@ export const editUsernameOrEmail = async (req: Request, res: Response) => {
     const userId: string = req.params.userId;
     const { username, email } = req.body;
 
-    if (isNaN(parseInt(userId, 10))) {
-        throw Object.assign(new Error(), {
-            status: 400,
-            message: "Le paramètre userId doit être un nombre valide",
-        });
-    }
-
-    if (!username) {
-        throw Object.assign(new Error(), {
-            status: 400,
-            message: "Le champ username est manquant dans la requête",
-        });
-    }
-
     const normalizedNewUsername: string = username.toLowerCase();
     const newEmail: string = email;
 
-    if (!normalizedNewUsername || !newEmail) {
-        throw Object.assign(new Error(), {
-            status: 400,
-            message: "Champs non définis dans le corps de la requête",
-            exemple: `username: "John-Doe", email: "Johndoe@outlook.com"`,
-        });
-    }
-
     try {
+        if (!userId) {
+            throw Object.assign(new Error(), {
+                status: 400,
+                message: "Le paramètre userId est absent du corps de la requête",
+            });
+        }
+
+        if (isNaN(parseInt(userId, 10))) {
+            throw Object.assign(new Error(), {
+                status: 400,
+                message: "Le paramètre userId doit être un nombre valide",
+            });
+        }
+
+        if (!username || !email) {
+            throw Object.assign(new Error(), {
+                status: 400,
+                message: "Le champ username et/ou email est absent de la requête",
+            });
+        }
+
+        if (!normalizedNewUsername || !newEmail) {
+            throw Object.assign(new Error(), {
+                status: 400,
+                message: "Champs non définis dans le corps de la requête",
+                exemple: `username: "JohnDoe", email: "Johndoe7654@gmail.com"`,
+            });
+        }
+
         const formerUser = await prisma.users.findUnique({ where: { id: parseInt(userId, 10) } });
 
         if (!formerUser) {
@@ -297,28 +311,34 @@ export const editPassword = async (req: Request, res: Response) => {
     const userId: string = req.params.userId;
     const { formerPassword, newPassword }: { formerPassword: string; newPassword: string } = req.body;
 
-    if (isNaN(parseInt(userId, 10))) {
-        throw Object.assign(new Error(), {
-            status: 400,
-            message: "Le paramètre userId doit être un nombre valide",
-        });
-    }
-
-    if (!formerPassword || !newPassword) {
-        throw Object.assign(new Error(), {
-            status: 400,
-            message: "Ancien mot de passe / nouveau mot de passe absent de la requête",
-        });
-    }
-
-    if (formerPassword === newPassword) {
-        throw Object.assign(new Error(), {
-            status: 400,
-            message: "Le nouveau mot de passe ne peut pas être identique au précédent",
-        });
-    }
-
     try {
+        if (!userId) {
+            throw Object.assign(new Error(), {
+                status: 400,
+                message: "Le paramètre userId est absent du corps de la requête",
+            });
+        }
+        if (isNaN(parseInt(userId, 10))) {
+            throw Object.assign(new Error(), {
+                status: 400,
+                message: "Le paramètre userId doit être un nombre valide",
+            });
+        }
+
+        if (!formerPassword || !newPassword) {
+            throw Object.assign(new Error(), {
+                status: 400,
+                message: "Ancien mot de passe / nouveau mot de passe absent(s) de la requête",
+            });
+        }
+
+        if (formerPassword === newPassword) {
+            throw Object.assign(new Error(), {
+                status: 400,
+                message: "Le nouveau mot de passe ne peut pas être identique au précédent",
+            });
+        }
+
         const user = await prisma.users.findUnique({ where: { id: parseInt(userId, 10) } });
 
         if (!user) {
@@ -358,7 +378,7 @@ export const editPicture = async (req: Request, res: Response) => {
     const userId: string = req.params.userId;
     const pictureNumber: number = req.body.pictureNumber;
 
-    if (!userId) {
+    if (!userId || !pictureNumber) {
         throw Object.assign(new Error(), {
             status: 400,
             message: "Des paramètres sont absents de la requête (param: userId, body: pictureNumber)",
@@ -414,6 +434,20 @@ export const deleteUser = async (req: Request, res: Response) => {
     const { password } = req.body;
 
     try {
+        if (!userId) {
+            throw Object.assign(new Error(), {
+                status: 400,
+                message: "Le paramètre userId est absent du corps de la requête",
+            });
+        }
+
+        if (isNaN(parseInt(userId, 10))) {
+            throw Object.assign(new Error(), {
+                status: 400,
+                message: "Le paramètre userId doit être un nombre valide",
+            });
+        }
+
         if (!password) {
             throw Object.assign(new Error(), {
                 status: 400,

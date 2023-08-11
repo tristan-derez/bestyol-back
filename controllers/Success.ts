@@ -23,24 +23,24 @@ export const getAllSuccess = async (_req: Request, res: Response) => {
 export const getOneSuccess = async (req: Request, res: Response) => {
     const successId: string = req.params.id;
 
-    if (isNaN(parseInt(successId, 10))) {
-        throw Object.assign(new Error(), {
-            status: 400,
-            message: "Le paramètre successId doit être un nombre valide",
-        });
-    }
-
-    if (!successId) {
-        throw Object.assign(new Error(), {
-            status: 404,
-            message: "Requête invalide, exemple: paramètre manquant",
-        });
-    }
-
     try {
-        const success: Success | null = await prisma.success.findUnique({ where: { id: parseInt(successId, 10) } });
+        if (!successId) {
+            throw Object.assign(new Error(), {
+                status: 400,
+                message: "Requête invalide, exemple: paramètre manquant",
+            });
+        }
 
-        if (success === null) {
+        if (isNaN(parseInt(successId, 10))) {
+            throw Object.assign(new Error(), {
+                status: 400,
+                message: "Le paramètre successId doit être un nombre valide",
+            });
+        }
+
+        const success = await prisma.success.findUnique({ where: { id: parseInt(successId, 10) } });
+
+        if (!success) {
             throw Object.assign(new Error(), {
                 status: 404,
                 message: "Succès introuvable",
