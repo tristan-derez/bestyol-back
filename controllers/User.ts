@@ -67,9 +67,16 @@ export const signup = async (req: Request, res: Response) => {
 };
 
 export const login = async (req: Request, res: Response) => {
-    const { username, password } = req.body;
+    const { username, password }: { username: string; password: string } = req.body;
 
     const normalizedUsername: string = username.toLowerCase();
+
+    if (!username || !password) {
+        throw Object.assign(new Error(), {
+            status: 400,
+            message: "Username et/ou mot de passe absent(s) de la requête",
+        });
+    }
 
     try {
         const user = await prisma.users.findUnique({
