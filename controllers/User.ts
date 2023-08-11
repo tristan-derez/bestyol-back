@@ -19,12 +19,18 @@ export const signup = async (req: Request, res: Response) => {
         const existingUsername = await prisma.users.findUnique({ where: { username: normalizedUsername } });
         const existingEmail = await prisma.users.findUnique({ where: { email } });
 
-        if (existingUsername != null) {
-            return res.status(400).json({ erreur: "Le nom d'utilisateur existe déjà" });
+        if (existingUsername) {
+            throw Object.assign(new Error(), {
+                status: 400,
+                message: "Le nom d'utilisateur n'est pas disponible",
+            });
         }
 
-        if (existingEmail != null) {
-            return res.status(400).json({ erreur: "L'email existe déjà" });
+        if (existingEmail) {
+            throw Object.assign(new Error(), {
+                status: 400,
+                message: "L'email renseigné n'est pas disponible",
+            });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -56,8 +62,7 @@ export const signup = async (req: Request, res: Response) => {
             accessToken: accessToken,
         });
     } catch (error: any) {
-        console.log(error.message);
-        return res.status(500).json({ erreur: error });
+        return res.status(error.status || 500).json({ erreur: error.message || "Erreur interne 😔" });
     }
 };
 
@@ -79,8 +84,11 @@ export const login = async (req: Request, res: Response) => {
             },
         });
 
-        if (user === null) {
-            return res.status(401).json({ erreur: "Identifiants non valides 😢" });
+        if (!user) {
+            throw Object.assign(new Error(), {
+                status: 401,
+                message: "Identifiants non valides 😢",
+            });
         }
 
         const passwordMatch = await bcrypt.compare(password, user.password);
@@ -96,11 +104,13 @@ export const login = async (req: Request, res: Response) => {
                 accessToken: accessToken,
             });
         } else {
-            return res.status(401).json({ erreur: "Identifiants non valides 😢" });
+            throw Object.assign(new Error(), {
+                status: 401,
+                message: "Identifiants non valides 😢",
+            });
         }
     } catch (error: any) {
-        console.log(error.message);
-        return res.status(500).json({ erreur: error });
+        return res.status(error.status || 500).json({ erreur: error.message || "Erreur interne 😔" });
     }
 };
 
@@ -109,7 +119,10 @@ export const refreshAccessToken = async (req: Request, res: Response) => {
 
     try {
         if (!token) {
-            throw Object.assign(new Error("Pas de token, pas d'autorisation"), { status: 401 });
+            throw Object.assign(new Error(), {
+                status: 401,
+                message: "Erreur d'authentification 😔",
+            });
         }
 
         const decodedToken = jwt.verify(token as string, process.env.REFRESH_TOKEN_SECRET as string) as JwtPayload;
@@ -119,14 +132,16 @@ export const refreshAccessToken = async (req: Request, res: Response) => {
         const user = await prisma.users.findUnique({ where: { id: parseInt(userId, 10) } });
 
         if (!user) {
-            throw Object.assign(new Error("Erreur d'authentification"), { status: 401 });
+            throw Object.assign(new Error(), {
+                status: 401,
+                message: "Erreur d'authentification 😔",
+            });
         }
 
         const refreshedToken = await generateAccessToken(parseInt(userId, 10));
         res.status(200).send({ accessToken: refreshedToken });
     } catch (error: any) {
-        console.log(error.message);
-        return res.status(error.status || 500).json({ erreur: error.message });
+        return res.status(error.status || 500).json({ erreur: error.message || "Erreur interne" });
     }
 };
 
@@ -135,28 +150,28 @@ export const getUser = async (req: AuthenticatedRequest, res: Response) => {
     const userId: string = req.params.userId;
 
     if (isNaN(parseInt(userId, 10))) {
-        res.status(400).json({ erreur: "Le paramètre userId doit être un nombre valide" });
-        return;
+        throw Object.assign(new Error(), {
+            status: 400,
+            message: "Le paramètre userId doit être un nombre valide",
+        });
     }
 
     try {
-        const user = await prisma.users.findUnique({ where: { id: parseInt(userId, 10) } });
+        const user = await prisma.users.findUnique({
+            where: { id: parseInt(userId, 10) },
+            select: { id: true, pp: true, banner: true, email: true, username: true, createdAt: true },
+        });
 
-        if (user === null) {
-            return res.status(404).json({ erreur: "Utilisateur non trouvé 😢" });
+        if (!user) {
+            throw Object.assign(new Error(), {
+                status: 404,
+                message: "Utilisateur non trouvé",
+            });
         }
 
-        res.status(200).json({
-            id: user.id,
-            pp: user.pp,
-            banner: user.banner,
-            email: user.email,
-            username: user.username,
-            createdAt: user.createdAt,
-        });
+        res.status(200).json({ ...user });
     } catch (error: any) {
-        console.log(error.message);
-        res.status(500).json({ erreur: error });
+        res.status(error.status || 500).json({ erreur: error.message || "Erreur interne" });
     }
 };
 
@@ -164,42 +179,88 @@ export const getUser = async (req: AuthenticatedRequest, res: Response) => {
 export const editUsernameOrEmail = async (req: Request, res: Response) => {
     const userId: string = req.params.userId;
     const { username, email } = req.body;
-    const normalizedUsername: string = username?.toLowerCase();
+
+    if (isNaN(parseInt(userId, 10))) {
+        throw Object.assign(new Error(), {
+            status: 400,
+            message: "Le paramètre userId doit être un nombre valide",
+        });
+    }
+
+    if (!username) {
+        throw Object.assign(new Error(), {
+            status: 400,
+            message: "Le champ username est manquant dans la requête",
+        });
+    }
+
+    const normalizedNewUsername: string = username.toLowerCase();
+    const newEmail: string = email;
+
+    if (!normalizedNewUsername || !newEmail) {
+        throw Object.assign(new Error(), {
+            status: 400,
+            message: "Champs non définis dans le corps de la requête",
+            exemple: `username: "John-Doe", email: "Johndoe@outlook.com"`,
+        });
+    }
 
     try {
         const formerUser = await prisma.users.findUnique({ where: { id: parseInt(userId, 10) } });
 
-        if (normalizedUsername === formerUser?.username && email === formerUser?.email) {
-            throw new Error("Les nouveaux username et email sont identiques aux précédents");
+        if (!formerUser) {
+            throw Object.assign(new Error(), {
+                status: 404,
+                message: "Utilisateur introuvable",
+            });
         }
 
-        if (normalizedUsername === undefined && email === undefined) {
-            throw new Error("L'username et l'email sont undefined");
+        if (normalizedNewUsername === formerUser.username && email === formerUser.email) {
+            throw Object.assign(new Error(), {
+                status: 400,
+                message: "Les nouveaux username et email sont identiques aux précédents",
+            });
         }
 
-        if (normalizedUsername === formerUser?.username && email === undefined) {
-            throw new Error("Le nouvel username est identique au précédent et l'email est undefined");
+        if (!normalizedNewUsername && !newEmail) {
+            throw Object.assign(new Error(), {
+                status: 400,
+                message: "Le nom d'utilisateur et l'email ne sont pas définis",
+            });
         }
 
-        if (email === formerUser?.email && normalizedUsername === undefined) {
-            throw new Error("Le nouvel email est identique au précédent et l'username est undefined");
+        if (normalizedNewUsername === formerUser.username) {
+            throw Object.assign(new Error(), {
+                status: 400,
+                message: "le nouveau nom d'utilisateur est indentique au précedent",
+            });
         }
 
-        if (normalizedUsername !== undefined) {
-            const existingUsername = await prisma.users.findUnique({ where: { username: normalizedUsername } });
-
-            if (existingUsername !== null && existingUsername.username !== formerUser?.username) {
-                return res.status(400).json({ details: "Le nom d'utilisateur existe déjà" });
-            }
+        if (email === formerUser.email) {
+            throw Object.assign(new Error(), {
+                status: 400,
+                message: "Le nouvel email indentique au précedent",
+            });
         }
 
-        if (email !== undefined) {
-            const existingEmail = await prisma.users.findUnique({ where: { email } });
+        // search the new username in database, if it already exist, we throw an error
+        const existingUsername = await prisma.users.findUnique({ where: { username: normalizedNewUsername } });
 
-            if (existingEmail !== null && existingEmail.email !== formerUser?.email) {
-                console.log(formerUser?.email);
-                return res.status(400).json({ details: "L'email existe déjà" });
-            }
+        if (existingUsername && existingUsername.username !== formerUser.username) {
+            throw Object.assign(new Error(), {
+                status: 400,
+                message: "Ce nom d'utilisateur n'est pas disponible",
+            });
+        }
+
+        // search the new email in database, if it already exist, we throw an error
+        const existingEmail = await prisma.users.findUnique({ where: { email: newEmail } });
+
+        if (existingEmail && existingEmail.email !== formerUser.email) {
+            throw Object.assign(new Error(), {
+                status: 400,
+                message: "Cette adresse email est déjà utilisée par un autre utilisateur",
+            });
         }
 
         const updatedUser = await prisma.users.update({
@@ -207,8 +268,8 @@ export const editUsernameOrEmail = async (req: Request, res: Response) => {
                 id: parseInt(userId, 10),
             },
             data: {
-                username: normalizedUsername ? { set: normalizedUsername } : undefined,
-                email: email ? { set: email } : undefined,
+                username: normalizedNewUsername ? { set: normalizedNewUsername } : undefined,
+                email: newEmail ? { set: newEmail } : undefined,
             },
             select: {
                 id: true,
@@ -217,38 +278,55 @@ export const editUsernameOrEmail = async (req: Request, res: Response) => {
             },
         });
 
-        return res.json({ message: "Informations de l'utilisateur modifiées avec succès", updatedUser });
+        return res.status(200).json({ message: "Informations de l'utilisateur modifiées avec succès", updatedUser });
     } catch (error: any) {
-        console.log(error.message);
-        return res.status(400).json({ details: "Les informations de l'utilisateur n'ont pas été modifiées. Plus d'informations en console" });
+        return res.status(error.status || 500).json({ erreur: error.message || "Erreur interne" });
     }
 };
 
 export const editPassword = async (req: Request, res: Response) => {
     const userId: string = req.params.userId;
-    const { formerPassword, newPassword } = req.body;
+    const { formerPassword, newPassword }: { formerPassword: string; newPassword: string } = req.body;
+
+    if (isNaN(parseInt(userId, 10))) {
+        throw Object.assign(new Error(), {
+            status: 400,
+            message: "Le paramètre userId doit être un nombre valide",
+        });
+    }
+
+    if (!formerPassword || !newPassword) {
+        throw Object.assign(new Error(), {
+            status: 400,
+            message: "Ancien mot de passe / nouveau mot de passe absent de la requête",
+        });
+    }
+
+    if (formerPassword === newPassword) {
+        throw Object.assign(new Error(), {
+            status: 400,
+            message: "Le nouveau mot de passe ne peut pas être identique au précédent",
+        });
+    }
 
     try {
-        if (formerPassword === undefined) {
-            throw Object.assign(new Error(), {
-                status: 400,
-                details: "Ancien mot de passe absent de la requête",
-            });
-        }
-
         const user = await prisma.users.findUnique({ where: { id: parseInt(userId, 10) } });
 
-        if (user === null) {
-            return res.status(401).json({ erreur: "Utilisateur introuvable" });
+        if (!user) {
+            throw Object.assign(new Error(), {
+                status: 404,
+                message: "Utilisateur introuvable",
+            });
         }
 
         const passwordMatch = await bcrypt.compare(formerPassword, user.password);
 
-        if (passwordMatch) {
-            if (formerPassword === newPassword) {
-                throw new Error("Le nouveau mot de passe est identique au précédent");
-            }
-
+        if (!passwordMatch) {
+            throw Object.assign(new Error(), {
+                status: 401,
+                message: "Mot de passe incorrect",
+            });
+        } else if (passwordMatch) {
             const hashedNewPassword = await bcrypt.hash(newPassword, 10);
 
             await prisma.users.update({
@@ -261,28 +339,35 @@ export const editPassword = async (req: Request, res: Response) => {
             });
 
             return res.status(200).json({ message: "Mot de passe modifié avec succès" });
-        } else {
-            throw Object.assign(new Error(), {
-                status: 401,
-                details: "Mot de passe incorrect",
-            });
         }
     } catch (error: any) {
-        console.log(error.message);
-        const { status, ...errorWithoutStatus } = error;
-        return res.status(error.status || 500).json(errorWithoutStatus);
+        return res.status(error.status || 500).json({ erreur: error.message || "Erreur interne" });
     }
 };
 
 export const editPicture = async (req: Request, res: Response) => {
     const userId: string = req.params.userId;
-    const pictureNumber = req.body.pictureNumber;
+    const pictureNumber: number = req.body.pictureNumber;
+
+    if (!userId) {
+        throw Object.assign(new Error(), {
+            status: 400,
+            message: "Des paramètres sont absents de la requête (param: userId, body: pictureNumber)",
+        });
+    }
+
+    if (isNaN(parseInt(userId, 10))) {
+        throw Object.assign(new Error(), {
+            status: 400,
+            message: "Le paramètre userId doit être un nombre valide",
+        });
+    }
 
     try {
         if (pictureNumber < 1 || pictureNumber > 48) {
             throw Object.assign(new Error(), {
-                status: 400,
-                details: "L'image n'existe pas",
+                status: 404,
+                message: "Image introuvable",
             });
         }
 
@@ -301,11 +386,16 @@ export const editPicture = async (req: Request, res: Response) => {
             },
         });
 
+        if (!updatedUser) {
+            throw Object.assign(new Error(), {
+                status: 404,
+                message: "Utilisateur introuvable",
+            });
+        }
+
         return res.json({ message: "L'image de profil a bien été modifiée !", updatedUser });
     } catch (error: any) {
-        console.log(error.message);
-        const { status, ...errorWithoutStatus } = error;
-        return res.status(error.status || 500).json(errorWithoutStatus);
+        return res.status(error.status || 500).json({ erreur: error.message || "Erreur interne" });
     }
 };
 
@@ -315,25 +405,30 @@ export const deleteUser = async (req: Request, res: Response) => {
     const { password } = req.body;
 
     try {
-        if (password === undefined) {
+        if (!password) {
             throw Object.assign(new Error(), {
                 status: 400,
-                details: "Mot de passe requis",
+                message: "Mot de passe requis",
             });
         }
 
         const user = await prisma.users.findUnique({ where: { id: parseInt(userId, 10) } });
 
-        if (user === null) {
+        if (!user) {
             throw Object.assign(new Error(), {
-                status: 401,
-                details: "Utilisateur introuvable",
+                status: 404,
+                message: "Utilisateur introuvable",
             });
         }
 
         const passwordMatch = await bcrypt.compare(password, user.password);
 
-        if (passwordMatch) {
+        if (!passwordMatch) {
+            throw Object.assign(new Error(), {
+                status: 400,
+                message: "Mot de passe incorrect",
+            });
+        } else if (passwordMatch) {
             await prisma.userSuccess.deleteMany({
                 where: {
                     userId: parseInt(userId, 10),
@@ -359,15 +454,9 @@ export const deleteUser = async (req: Request, res: Response) => {
             });
 
             return res.status(200).json({ message: "L'utilisateur a bien été supprimé" });
-        } else {
-            throw Object.assign(new Error(), {
-                status: 401,
-                details: "Mot de passe incorrect",
-            });
         }
     } catch (error: any) {
-        console.log(error.message);
-        return res.status(error.status || 500).json({ details: error.details });
+        return res.status(error.status || 500).json({ message: error.message || "Erreur interne" });
     }
 };
 
