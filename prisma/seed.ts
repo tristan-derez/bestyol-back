@@ -2,194 +2,6 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
-    //* DAILYTASKS
-    const water = await prisma.dailyTasks.upsert({
-        where: { title: "Boire de l'eau" },
-        update: {},
-        create: {
-            title: "Boire de l'eau",
-            image: "/assets/tasks/1.svg",
-            category: "Besoin vitaux",
-            difficulty: 1,
-            xp: 10,
-            successId: 1,
-        },
-    });
-
-    const healthyCooking = await prisma.dailyTasks.upsert({
-        where: { title: "Préparer et manger un repas sain" },
-        update: {},
-        create: {
-            title: "Préparer et manger un repas sain",
-            image: "/assets/tasks/18.svg",
-            category: "Besoin vitaux",
-            difficulty: 3,
-            xp: 40,
-            successId: 2,
-        },
-    });
-
-    const physicalActivity = await prisma.dailyTasks.upsert({
-        where: { title: "Faire 10 minutes d'activité physique" },
-        update: {},
-        create: {
-            title: "Faire 10 minutes d'activité physique",
-            image: "/assets/tasks/3.svg",
-            category: "Sport",
-            difficulty: 3,
-            xp: 40,
-            successId: 3,
-        },
-    });
-
-    const readSomePages = await prisma.dailyTasks.upsert({
-        where: { title: "Lire quelques pages d'un livre" },
-        update: {},
-        create: {
-            title: "Lire quelques pages d'un livre",
-            image: "/assets/tasks/4.svg",
-            category: "Apprentissage",
-            difficulty: 2,
-            xp: 20,
-            successId: 4,
-        },
-    });
-
-    const meditate = await prisma.dailyTasks.upsert({
-        where: { title: "Méditer pendant 10 minutes" },
-        update: {},
-        create: {
-            title: "Méditer pendant 10 minutes",
-            image: "/assets/tasks/5.svg",
-            category: "Relaxation",
-            difficulty: 1,
-            xp: 10,
-            successId: 5,
-        },
-    });
-
-    const learnSomethingNew = await prisma.dailyTasks.upsert({
-        where: { title: "Apprendre quelque chose de nouveau" },
-        update: {},
-        create: {
-            title: "Apprendre quelque chose de nouveau",
-            image: "/assets/tasks/6.svg",
-            category: "Apprentissage",
-            difficulty: 3,
-            xp: 40,
-            successId: 6,
-        },
-    });
-
-    const walkOutside = await prisma.dailyTasks.upsert({
-        where: { title: "Sortir dehors 30 minutes" },
-        update: {},
-        create: {
-            title: "Sortir dehors 30 minutes",
-            image: "/assets/tasks/7.svg",
-            category: "Sport",
-            difficulty: 4,
-            xp: 60,
-            successId: 7,
-        },
-    });
-
-    const stayInTouch = await prisma.dailyTasks.upsert({
-        where: { title: "Contacter un proche" },
-        update: {},
-        create: {
-            title: "Contacter un proche",
-            image: "/assets/tasks/8.svg",
-            category: "Besoin vitaux",
-            difficulty: 1,
-            xp: 10,
-            successId: 8,
-        },
-    });
-
-    const cookSomethingNew = await prisma.dailyTasks.upsert({
-        where: { title: "Cuisiner quelque chose de nouveau" },
-        update: {},
-        create: {
-            title: "Cuisiner quelque chose de nouveau",
-            category: "Apprentissage",
-            image: "/assets/tasks/2.svg",
-            difficulty: 3,
-            xp: 40,
-        },
-    });
-
-    const stretchYourself = await prisma.dailyTasks.upsert({
-        where: { title: "Faire des étirements" },
-        update: {},
-        create: {
-            title: "Faire des étirements",
-            image: "/assets/tasks/9.svg",
-            category: "Relaxation",
-            difficulty: 2,
-            xp: 20,
-            successId: 9,
-        },
-    });
-
-    const cleanTheHouse = await prisma.dailyTasks.upsert({
-        where: { title: "Faire un brin de ménage" },
-        update: {},
-        create: {
-            title: "Faire un brin de ménage",
-            image: "/assets/tasks/10.svg",
-            category: "Corvée",
-            difficulty: 4,
-            xp: 60,
-            successId: 10,
-        },
-    });
-
-    const treatYourself = await prisma.dailyTasks.upsert({
-        where: {
-            title: "Prendre un moment pour s'occuper de soi",
-        },
-        update: {},
-        create: {
-            title: "Prendre un moment pour s'occuper de soi",
-            image: "/assets/tasks/11.svg",
-            category: "Relaxation",
-            difficulty: 3,
-            xp: 40,
-            successId: 11,
-        },
-    });
-
-    const doSomethingCreative = await prisma.dailyTasks.upsert({
-        where: {
-            title: "Faire quelque chose de créatif",
-        },
-        update: {},
-        create: {
-            title: "Faire quelque chose de créatif",
-            image: "/assets/tasks/12.svg",
-            category: "Relaxation",
-            difficulty: 4,
-            xp: 60,
-            successId: 12,
-        },
-    });
-
-    const musicListening = await prisma.dailyTasks.upsert({
-        where: {
-            title: "Écouter de la musique",
-        },
-        update: {},
-        create: {
-            title: "Écouter de la musique",
-            image: "/assets/tasks/13.svg",
-            category: "Relaxation",
-            difficulty: 1,
-            xp: 10,
-            successId: 13,
-        },
-    });
-
     //* SUCCESS
     const hydrationControl = await prisma.success.upsert({
         where: { title: "Maîtrise de l'hydratation" },
@@ -503,6 +315,194 @@ async function main() {
         },
     });
 
+    //* DAILYTASKS
+    const water = await prisma.dailyTasks.upsert({
+        where: { title: "Boire de l'eau" },
+        update: {},
+        create: {
+            title: "Boire de l'eau",
+            image: "/assets/tasks/1.svg",
+            category: "Besoin vitaux",
+            difficulty: 1,
+            xp: 10,
+            successId: 1,
+        },
+    });
+
+    const healthyCooking = await prisma.dailyTasks.upsert({
+        where: { title: "Préparer et manger un repas sain" },
+        update: {},
+        create: {
+            title: "Préparer et manger un repas sain",
+            image: "/assets/tasks/18.svg",
+            category: "Besoin vitaux",
+            difficulty: 3,
+            xp: 40,
+            successId: 2,
+        },
+    });
+
+    const physicalActivity = await prisma.dailyTasks.upsert({
+        where: { title: "Faire 10 minutes d'activité physique" },
+        update: {},
+        create: {
+            title: "Faire 10 minutes d'activité physique",
+            image: "/assets/tasks/3.svg",
+            category: "Sport",
+            difficulty: 3,
+            xp: 40,
+            successId: 3,
+        },
+    });
+
+    const readSomePages = await prisma.dailyTasks.upsert({
+        where: { title: "Lire quelques pages d'un livre" },
+        update: {},
+        create: {
+            title: "Lire quelques pages d'un livre",
+            image: "/assets/tasks/4.svg",
+            category: "Apprentissage",
+            difficulty: 2,
+            xp: 20,
+            successId: 4,
+        },
+    });
+
+    const meditate = await prisma.dailyTasks.upsert({
+        where: { title: "Méditer pendant 10 minutes" },
+        update: {},
+        create: {
+            title: "Méditer pendant 10 minutes",
+            image: "/assets/tasks/5.svg",
+            category: "Relaxation",
+            difficulty: 1,
+            xp: 10,
+            successId: 5,
+        },
+    });
+
+    const learnSomethingNew = await prisma.dailyTasks.upsert({
+        where: { title: "Apprendre quelque chose de nouveau" },
+        update: {},
+        create: {
+            title: "Apprendre quelque chose de nouveau",
+            image: "/assets/tasks/6.svg",
+            category: "Apprentissage",
+            difficulty: 3,
+            xp: 40,
+            successId: 6,
+        },
+    });
+
+    const walkOutside = await prisma.dailyTasks.upsert({
+        where: { title: "Sortir dehors 30 minutes" },
+        update: {},
+        create: {
+            title: "Sortir dehors 30 minutes",
+            image: "/assets/tasks/7.svg",
+            category: "Sport",
+            difficulty: 4,
+            xp: 60,
+            successId: 7,
+        },
+    });
+
+    const stayInTouch = await prisma.dailyTasks.upsert({
+        where: { title: "Contacter un proche" },
+        update: {},
+        create: {
+            title: "Contacter un proche",
+            image: "/assets/tasks/8.svg",
+            category: "Besoin vitaux",
+            difficulty: 1,
+            xp: 10,
+            successId: 8,
+        },
+    });
+
+    const cookSomethingNew = await prisma.dailyTasks.upsert({
+        where: { title: "Cuisiner quelque chose de nouveau" },
+        update: {},
+        create: {
+            title: "Cuisiner quelque chose de nouveau",
+            category: "Apprentissage",
+            image: "/assets/tasks/2.svg",
+            difficulty: 3,
+            xp: 40,
+        },
+    });
+
+    const stretchYourself = await prisma.dailyTasks.upsert({
+        where: { title: "Faire des étirements" },
+        update: {},
+        create: {
+            title: "Faire des étirements",
+            image: "/assets/tasks/9.svg",
+            category: "Relaxation",
+            difficulty: 2,
+            xp: 20,
+            successId: 9,
+        },
+    });
+
+    const cleanTheHouse = await prisma.dailyTasks.upsert({
+        where: { title: "Faire un brin de ménage" },
+        update: {},
+        create: {
+            title: "Faire un brin de ménage",
+            image: "/assets/tasks/10.svg",
+            category: "Corvée",
+            difficulty: 4,
+            xp: 60,
+            successId: 10,
+        },
+    });
+
+    const treatYourself = await prisma.dailyTasks.upsert({
+        where: {
+            title: "Prendre un moment pour s'occuper de soi",
+        },
+        update: {},
+        create: {
+            title: "Prendre un moment pour s'occuper de soi",
+            image: "/assets/tasks/11.svg",
+            category: "Relaxation",
+            difficulty: 3,
+            xp: 40,
+            successId: 11,
+        },
+    });
+
+    const doSomethingCreative = await prisma.dailyTasks.upsert({
+        where: {
+            title: "Faire quelque chose de créatif",
+        },
+        update: {},
+        create: {
+            title: "Faire quelque chose de créatif",
+            image: "/assets/tasks/12.svg",
+            category: "Relaxation",
+            difficulty: 4,
+            xp: 60,
+            successId: 12,
+        },
+    });
+
+    const musicListening = await prisma.dailyTasks.upsert({
+        where: {
+            title: "Écouter de la musique",
+        },
+        update: {},
+        create: {
+            title: "Écouter de la musique",
+            image: "/assets/tasks/13.svg",
+            category: "Relaxation",
+            difficulty: 1,
+            xp: 10,
+            successId: 13,
+        },
+    });
+
     //* SPECIES
     const existingGrumpfishEgg = await prisma.species.findFirst({
         where: {
@@ -510,12 +510,8 @@ async function main() {
             stage: "Egg",
         },
     });
-    const grumpfishEgg = await prisma.species.upsert({
-        where: {
-            id: existingGrumpfishEgg?.id,
-        },
-        update: {},
-        create: {
+    const grumpfishEgg = await prisma.species.create({
+        data: {
             name: "Grumpfish",
             stage: "Egg",
             image: "/assets/yols/egg/static/pouasson.png",
@@ -529,12 +525,8 @@ async function main() {
             stage: "Baby",
         },
     });
-    const grumpfishBaby = await prisma.species.upsert({
-        where: {
-            id: existingGrumpfishBaby?.id,
-        },
-        update: {},
-        create: {
+    const grumpfishBaby = await prisma.species.create({
+        data: {
             name: "Grumpfish",
             image: "/assets/yols/base/static/pouasson.png",
             gif: "/assets/yols/base/animated/pouasson.gif",
@@ -548,12 +540,8 @@ async function main() {
             stage: "Adolescent",
         },
     });
-    const grumpfishAdo = await prisma.species.upsert({
-        where: {
-            id: existingGrumpfishAdo?.id,
-        },
-        update: {},
-        create: {
+    const grumpfishAdo = await prisma.species.create({
+        data: {
             name: "Grumpfish",
             image: "/assets/yols/second/static/pouasson.png",
             gif: "/assets/yols/second/animated/pouasson.gif",
@@ -567,12 +555,8 @@ async function main() {
             stage: "Final",
         },
     });
-    const grumpfishFinal = await prisma.species.upsert({
-        where: {
-            id: existingGrumpfishFinal?.id,
-        },
-        update: {},
-        create: {
+    const grumpfishFinal = await prisma.species.create({
+        data: {
             name: "Grumpfish",
             image: "/assets/yols/third/static/pouasson.png",
             gif: "/assets/yols/third/animated/pouasson.gif",
@@ -586,12 +570,8 @@ async function main() {
             stage: "Egg",
         },
     });
-    const bumbleblinkEgg = await prisma.species.upsert({
-        where: {
-            id: existingBumbleblinkEgg?.id,
-        },
-        update: {},
-        create: {
+    const bumbleblinkEgg = await prisma.species.create({
+        data: {
             name: "Bumbleblink",
             image: "/assets/yols/egg/static/fantom.png",
             gif: "/assets/yols/egg/animated/fantom.gif",
@@ -605,12 +585,8 @@ async function main() {
             stage: "Baby",
         },
     });
-    const bumbleblinkBaby = await prisma.species.upsert({
-        where: {
-            id: existingBumbleblinkBaby?.id,
-        },
-        update: {},
-        create: {
+    const bumbleblinkBaby = await prisma.species.create({
+        data: {
             name: "Bumbleblink",
             image: "/assets/yols/base/static/fantom.png",
             gif: "/assets/yols/base/animated/fantom.gif",
@@ -624,12 +600,8 @@ async function main() {
             stage: "Adolescent",
         },
     });
-    const bumbleblinkAdo = await prisma.species.upsert({
-        where: {
-            id: existingBumbleblinkAdo?.id,
-        },
-        update: {},
-        create: {
+    const bumbleblinkAdo = await prisma.species.create({
+        data: {
             name: "Bumbleblink",
             image: "/assets/yols/second/static/fantom.png",
             gif: "/assets/yols/second/animated/fantom.gif",
@@ -643,12 +615,8 @@ async function main() {
             stage: "Final",
         },
     });
-    const bumbleblinkFinal = await prisma.species.upsert({
-        where: {
-            id: existingBumbleblinkFinal?.id,
-        },
-        update: {},
-        create: {
+    const bumbleblinkFinal = await prisma.species.create({
+        data: {
             name: "Bumbleblink",
             image: "/assets/yols/third/static/fantom.png",
             gif: "/assets/yols/third/animated/fantom.gif",
@@ -662,12 +630,8 @@ async function main() {
             stage: "Egg",
         },
     });
-    const greenbellyEgg = await prisma.species.upsert({
-        where: {
-            id: existingGreenbellyEgg?.id,
-        },
-        update: {},
-        create: {
+    const greenbellyEgg = await prisma.species.create({
+        data: {
             name: "Greenbelly",
             image: "/assets/yols/egg/static/feuille.png",
             gif: "/assets/yols/egg/animated/feuille.gif",
@@ -681,12 +645,8 @@ async function main() {
             stage: "Baby",
         },
     });
-    const greenbellyBaby = await prisma.species.upsert({
-        where: {
-            id: existingGreenbellyBaby?.id,
-        },
-        update: {},
-        create: {
+    const greenbellyBaby = await prisma.species.create({
+        data: {
             name: "Greenbelly",
             image: "/assets/yols/base/static/feuille.png",
             gif: "/assets/yols/base/animated/feuille.gif",
@@ -700,12 +660,8 @@ async function main() {
             stage: "Adolescent",
         },
     });
-    const greenbellyAdo = await prisma.species.upsert({
-        where: {
-            id: existingGreenbellyAdo?.id,
-        },
-        update: {},
-        create: {
+    const greenbellyAdo = await prisma.species.create({
+        data: {
             name: "Greenbelly",
             image: "/assets/yols/second/static/feuille.png",
             gif: "/assets/yols/second/animated/feuille.gif",
@@ -719,12 +675,8 @@ async function main() {
             stage: "Final",
         },
     });
-    const greenbellyFinal = await prisma.species.upsert({
-        where: {
-            id: existingGreenbellyFinal?.id,
-        },
-        update: {},
-        create: {
+    const greenbellyFinal = await prisma.species.create({
+        data: {
             name: "Greenbelly",
             image: "/assets/yols/third/static/feuille.png",
             gif: "/assets/yols/third/animated/feuille.gif",
