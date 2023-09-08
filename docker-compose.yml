@@ -1,0 +1,27 @@
+version: "3.5"
+
+services:
+    backend:
+        image: bestyol-back
+        container_name: backend
+        restart: unless-stopped
+        environment:
+            DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
+        ports:
+            - "3000:3000"
+        depends_on:
+            - postgres
+
+    postgres:
+        image: postgres:latest
+        env_file: .env
+        environment:
+            POSTGRES_DB: ${DB_NAME}
+            POSTGRES_USER: ${DB_USER}
+            POSTGRES_PASSWORD: ${DB_PASSWORD}
+        ports:
+            - "5432:5432"
+    adminer:
+        image: adminer
+        ports:
+            - 8080:8080
