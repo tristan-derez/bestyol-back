@@ -1,5 +1,8 @@
-npx prisma db push
-npx prisma generate
-node ./dist/prisma/seed.js
+# delay here is needed for docker
+sleep 10;
 
-exec node ./dist/server.js
+npx prisma db push;
+node dist/prisma/seed.js;
+
+echo "Starting your Node.js application...";
+exec npm start;
