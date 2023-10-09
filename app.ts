@@ -8,15 +8,12 @@ import userTasks from "./routes/UserTasks";
 import yolRoutes from "./routes/Yol";
 import speciesRoutes from "./routes/Species";
 
-// call express method to create express app
 const app: Express = express();
 
-// use express json method to translate json from client 🙃
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // cors middleware
-// could be app.use(cors()) if needed 🤓
 app.use((_req: Request, res: Response, next: NextFunction) => {
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content, Accept, Content-Type, Authorization");
