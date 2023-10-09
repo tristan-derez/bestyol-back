@@ -41,7 +41,7 @@
         "@types/node": "^20.1.2",
         "@types/pg": "^8.6.6",
         "nodemon": "^2.0.22",
-        "prisma": "^4.16.2",
+        "prisma": "^5.4.1",
         "ts-node": "^10.9.1",
         "tslib": "^2.5.0",
         "typescript": "^5.0.4"
