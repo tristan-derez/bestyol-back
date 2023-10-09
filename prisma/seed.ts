@@ -504,14 +504,11 @@ async function main() {
     });
 
     //* SPECIES
-    const existingGrumpfishEgg = await prisma.species.findFirst({
-        where: {
-            name: "Grumpfish",
-            stage: "Egg",
-        },
-    });
-    const grumpfishEgg = await prisma.species.create({
-        data: {
+
+    const grumpfishEgg = await prisma.species.upsert({
+        where: { id: 1 },
+        update: {},
+        create: {
             name: "Grumpfish",
             stage: "Egg",
             image: "/assets/yols/egg/static/pouasson.png",
@@ -519,14 +516,10 @@ async function main() {
         },
     });
 
-    const existingGrumpfishBaby = await prisma.species.findFirst({
-        where: {
-            name: "Grumpfish",
-            stage: "Baby",
-        },
-    });
-    const grumpfishBaby = await prisma.species.create({
-        data: {
+    const grumpfishBaby = await prisma.species.upsert({
+        where: { id: 2 },
+        update: {},
+        create: {
             name: "Grumpfish",
             image: "/assets/yols/base/static/pouasson.png",
             gif: "/assets/yols/base/animated/pouasson.gif",
@@ -534,14 +527,10 @@ async function main() {
         },
     });
 
-    const existingGrumpfishAdo = await prisma.species.findFirst({
-        where: {
-            name: "Grumpfish",
-            stage: "Adolescent",
-        },
-    });
-    const grumpfishAdo = await prisma.species.create({
-        data: {
+    const grumpfishAdo = await prisma.species.upsert({
+        where: { id: 3 },
+        update: {},
+        create: {
             name: "Grumpfish",
             image: "/assets/yols/second/static/pouasson.png",
             gif: "/assets/yols/second/animated/pouasson.gif",
@@ -549,14 +538,10 @@ async function main() {
         },
     });
 
-    const existingGrumpfishFinal = await prisma.species.findFirst({
-        where: {
-            name: "Grumpfish",
-            stage: "Final",
-        },
-    });
-    const grumpfishFinal = await prisma.species.create({
-        data: {
+    const grumpfishFinal = await prisma.species.upsert({
+        where: { id: 4 },
+        update: {},
+        create: {
             name: "Grumpfish",
             image: "/assets/yols/third/static/pouasson.png",
             gif: "/assets/yols/third/animated/pouasson.gif",
@@ -564,14 +549,10 @@ async function main() {
         },
     });
 
-    const existingBumbleblinkEgg = await prisma.species.findFirst({
-        where: {
-            name: "Bumbleblink",
-            stage: "Egg",
-        },
-    });
-    const bumbleblinkEgg = await prisma.species.create({
-        data: {
+    const bumbleblinkEgg = await prisma.species.upsert({
+        where: { id: 5 },
+        update: {},
+        create: {
             name: "Bumbleblink",
             image: "/assets/yols/egg/static/fantom.png",
             gif: "/assets/yols/egg/animated/fantom.gif",
@@ -579,14 +560,10 @@ async function main() {
         },
     });
 
-    const existingBumbleblinkBaby = await prisma.species.findFirst({
-        where: {
-            name: "Bumbleblink",
-            stage: "Baby",
-        },
-    });
-    const bumbleblinkBaby = await prisma.species.create({
-        data: {
+    const bumbleblinkBaby = await prisma.species.upsert({
+        where: { id: 6 },
+        update: {},
+        create: {
             name: "Bumbleblink",
             image: "/assets/yols/base/static/fantom.png",
             gif: "/assets/yols/base/animated/fantom.gif",
@@ -594,14 +571,10 @@ async function main() {
         },
     });
 
-    const existingBumbleblinkAdo = await prisma.species.findFirst({
-        where: {
-            name: "Bumbleblink",
-            stage: "Adolescent",
-        },
-    });
-    const bumbleblinkAdo = await prisma.species.create({
-        data: {
+    const bumbleblinkAdo = await prisma.species.upsert({
+        where: { id: 7 },
+        update: {},
+        create: {
             name: "Bumbleblink",
             image: "/assets/yols/second/static/fantom.png",
             gif: "/assets/yols/second/animated/fantom.gif",
@@ -609,14 +582,10 @@ async function main() {
         },
     });
 
-    const existingBumbleblinkFinal = await prisma.species.findFirst({
-        where: {
-            name: "Bumbleblink",
-            stage: "Final",
-        },
-    });
-    const bumbleblinkFinal = await prisma.species.create({
-        data: {
+    const bumbleblinkFinal = await prisma.species.upsert({
+        where: { id: 8 },
+        update: {},
+        create: {
             name: "Bumbleblink",
             image: "/assets/yols/third/static/fantom.png",
             gif: "/assets/yols/third/animated/fantom.gif",
@@ -624,14 +593,10 @@ async function main() {
         },
     });
 
-    const existingGreenbellyEgg = await prisma.species.findFirst({
-        where: {
-            name: "Greenbelly",
-            stage: "Egg",
-        },
-    });
-    const greenbellyEgg = await prisma.species.create({
-        data: {
+    const greenbellyEgg = await prisma.species.upsert({
+        where: { id: 9 },
+        update: {},
+        create: {
             name: "Greenbelly",
             image: "/assets/yols/egg/static/feuille.png",
             gif: "/assets/yols/egg/animated/feuille.gif",
@@ -639,14 +604,10 @@ async function main() {
         },
     });
 
-    const existingGreenbellyBaby = await prisma.species.findFirst({
-        where: {
-            name: "Greenbelly",
-            stage: "Baby",
-        },
-    });
-    const greenbellyBaby = await prisma.species.create({
-        data: {
+    const greenbellyBaby = await prisma.species.upsert({
+        where: { id: 10 },
+        update: {},
+        create: {
             name: "Greenbelly",
             image: "/assets/yols/base/static/feuille.png",
             gif: "/assets/yols/base/animated/feuille.gif",
@@ -654,14 +615,10 @@ async function main() {
         },
     });
 
-    const existingGreenbellyAdo = await prisma.species.findFirst({
-        where: {
-            name: "Greenbelly",
-            stage: "Adolescent",
-        },
-    });
-    const greenbellyAdo = await prisma.species.create({
-        data: {
+    const greenbellyAdo = await prisma.species.upsert({
+        where: { id: 11 },
+        update: {},
+        create: {
             name: "Greenbelly",
             image: "/assets/yols/second/static/feuille.png",
             gif: "/assets/yols/second/animated/feuille.gif",
@@ -669,14 +626,10 @@ async function main() {
         },
     });
 
-    const existingGreenbellyFinal = await prisma.species.findFirst({
-        where: {
-            name: "Greenbelly",
-            stage: "Final",
-        },
-    });
-    const greenbellyFinal = await prisma.species.create({
-        data: {
+    const greenbellyFinal = await prisma.species.upsert({
+        where: { id: 12 },
+        update: {},
+        create: {
             name: "Greenbelly",
             image: "/assets/yols/third/static/feuille.png",
             gif: "/assets/yols/third/animated/feuille.gif",
