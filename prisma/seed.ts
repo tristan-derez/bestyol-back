@@ -322,7 +322,7 @@ async function main() {
         create: {
             title: "Boire de l'eau",
             image: "/assets/tasks/1.svg",
-            category: "Besoin vitaux",
+            category: "Besoins vitaux",
             difficulty: 1,
             xp: 10,
             successId: 1,
@@ -335,7 +335,7 @@ async function main() {
         create: {
             title: "Préparer et manger un repas sain",
             image: "/assets/tasks/18.svg",
-            category: "Besoin vitaux",
+            category: "Besoins vitaux",
             difficulty: 3,
             xp: 40,
             successId: 2,
@@ -413,7 +413,7 @@ async function main() {
         create: {
             title: "Contacter un proche",
             image: "/assets/tasks/8.svg",
-            category: "Besoin vitaux",
+            category: "Besoins vitaux",
             difficulty: 1,
             xp: 10,
             successId: 8,
