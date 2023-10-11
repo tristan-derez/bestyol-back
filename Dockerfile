@@ -1,9 +1,12 @@
 FROM node:20.6.0
 
-RUN mkdir /bestyol-back
 WORKDIR /bestyol-back
 
-COPY . .
+COPY package*.json ./
+COPY tsconfig.json ./
+COPY prisma prisma/
+COPY .env ./
+COPY dist dist/
 # install node modules
 RUN npm install
 # generate prisma client
