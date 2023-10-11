@@ -118,17 +118,10 @@ export const getUserTasks = async (req: AuthenticatedRequest, res: Response) => 
     const userId: string = req.params.userId;
 
     try {
-        if (!userId) {
+        if (!userId || isNaN(parseInt(userId, 10))) {
             throw Object.assign(new Error(), {
                 status: 400,
-                message: "Le paramètre userId absent de la requête",
-            });
-        }
-
-        if (isNaN(parseInt(userId, 10))) {
-            throw Object.assign(new Error(), {
-                status: 400,
-                message: "Le paramètre userId doit être un nombre valide",
+                message: "Le paramètre userId absent de la requête et/ou doit être un nombre valide",
             });
         }
 
