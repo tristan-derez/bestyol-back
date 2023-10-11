@@ -44,9 +44,9 @@ export const createUserCustomTask = async (req: AuthenticatedRequest, res: Respo
             },
         });
 
-        return res.status(201).json({ userTask, message: "Tâche créée 🥳🎉" });
+        return res.status(201).json({ userTask });
     } catch (error: any) {
-        return res.status(error.status || 500).json({ erreur: error.message || "Erreur lors de la création de la tâche 😕" });
+        return res.status(error.status || 500).json({ erreur: error.message || "Erreur lors de la création de la tâche" });
     }
 };
 
@@ -58,17 +58,10 @@ export const createUserDailyTasks = async (req: AuthenticatedRequest, res: Respo
     const endOfToday: number | Date = endOfDay(today);
 
     try {
-        if (!userId) {
+        if (!userId || isNaN(parseInt(userId, 10))) {
             throw Object.assign(new Error(), {
                 status: 400,
-                message: "Le paramètre userId est absent de la requête",
-            });
-        }
-
-        if (isNaN(parseInt(userId, 10))) {
-            throw Object.assign(new Error(), {
-                status: 400,
-                message: "Le paramètre userId doit être un nombre valide",
+                message: "Le paramètre userId est absent de la requête et/ou doit être un nombre valide",
             });
         }
 
@@ -84,49 +77,9 @@ export const createUserDailyTasks = async (req: AuthenticatedRequest, res: Respo
         });
 
         if (existingDailyTasks) {
-            throw Object.assign(new Error(), {
-                status: 400,
-                message: "L'utilisateur a déjà des tâches quotidiennes pour cette date 😕",
-            });
+            res.status(200).json({ existingDailyTasks });
+            return;
         }
-
-        const expiredDailytasks = await prisma.userTasks.findFirst({
-            where: {
-                userId: parseInt(userId, 10),
-                isDaily: true,
-                createdAt: {
-                    lt: startOfToday,
-                },
-            },
-        });
-
-        if (expiredDailytasks) {
-            const incompleteTasks = await prisma.userTasks.findMany({
-                where: {
-                    userId: parseInt(userId, 10),
-                    isDaily: true,
-                    isCompleted: false,
-                    createdAt: {
-                        lt: startOfToday,
-                    },
-                },
-            });
-
-            if (incompleteTasks.length > 0) {
-                await prisma.userTasks.deleteMany({
-                    where: {
-                        userId: parseInt(userId, 10),
-                        isDaily: true,
-                        isCompleted: false,
-                        createdAt: {
-                            lt: startOfToday,
-                        },
-                    },
-                });
-            }
-        }
-
-        await newActiveDaily(6);
 
         const tasks: DailyTasks[] = await prisma.dailyTasks.findMany({
             where: {
@@ -154,7 +107,7 @@ export const createUserDailyTasks = async (req: AuthenticatedRequest, res: Respo
             userTasks.push(userTask);
         }
 
-        res.status(200).json({ userTasks, message: "Tâches quotidiennes assignées 🥳🎉" });
+        res.status(200).json({ userTasks });
     } catch (error: any) {
         res.status(error.status || 500).json({ erreur: error.message || "Erreur lors de l'assignation des tâches quotidiennes à l'utilisateur" });
     }
