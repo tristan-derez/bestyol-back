@@ -7,6 +7,7 @@
         // Remove if you want ts-node to do typechecking.
         "transpileOnly": true,
         "files": true,
+        "moduleResolution": "Node16",
         "compilerOptions": {
             // compilerOptions specified here will override those declared below,
             // but *only* in ts-node.  Useful if you want ts-node and tsc to use
@@ -29,7 +30,7 @@
 
         /* Modules */
         "module": "node16" /* Specify what module code is generated. */,
-
+        "moduleResolution": "Node16",
         /* JavaScript Support */
         // "allowJs": true,                                  /* Allow JavaScript files to be a part of your program. Use the 'checkJS' option to get errors from these files. */
         // "checkJs": true,                                  /* Enable error reporting in type-checked JavaScript files. */
