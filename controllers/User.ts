@@ -13,23 +13,26 @@ import { createUserSuccess } from "../utils/createUserSuccess";
 export const signup = async (req: Request, res: Response) => {
     const { username, email, password } = req.body;
 
+    // we store username as lowercase to prevent mismatches
     const normalizedUsername: string = username.toLowerCase();
 
     try {
-        const existingUsername = await prisma.users.findUnique({ where: { username: normalizedUsername } });
-        const existingEmail = await prisma.users.findUnique({ where: { email } });
+        // check if the username or email already exist
+        const existingUser = await prisma.users.findFirst({
+            where: {
+                OR: [{ username: normalizedUsername }, { email: email }],
+            },
+        });
 
-        if (existingUsername) {
+        // 409 is status code for conflict which is the right status code
+        // when you're trying to add a resource
+        if (existingUser) {
             throw Object.assign(new Error(), {
-                status: 400,
-                message: "Le nom d'utilisateur n'est pas disponible",
-            });
-        }
-
-        if (existingEmail) {
-            throw Object.assign(new Error(), {
-                status: 400,
-                message: "L'email renseigné n'est pas disponible",
+                status: 409,
+                message:
+                    existingUser.username === normalizedUsername
+                        ? "Le nom d'utilisateur n'est pas disponible"
+                        : "L'email renseigné n'est pas disponible",
             });
         }
 
@@ -90,30 +93,24 @@ export const login = async (req: Request, res: Response) => {
             },
         });
 
-        if (!user) {
+        // if one or both conditions are false, throw an error.
+        if (!user || !(await bcrypt.compare(password, user.password))) {
             throw Object.assign(new Error(), {
                 status: 401,
                 message: "Identifiants non valides",
             });
         }
-
-        const passwordMatch = await bcrypt.compare(password, user.password);
 
         const accessToken = await generateAccessToken(user.id);
 
-        if (passwordMatch) {
-            const { password: _, ...userWithoutPassword } = user;
+        // we destruct user object to create another one
+        // without the password field
+        const { password: _, ...userWithoutPassword } = user;
 
-            return res.status(200).json({
-                user: userWithoutPassword,
-                accessToken: accessToken,
-            });
-        } else {
-            throw Object.assign(new Error(), {
-                status: 401,
-                message: "Identifiants non valides",
-            });
-        }
+        return res.status(200).json({
+            user: userWithoutPassword,
+            accessToken: accessToken,
+        });
     } catch (error: any) {
         return res.status(error.status || 500).json({ erreur: error.message || "Erreur interne" });
     }
@@ -198,32 +195,10 @@ export const editUsernameOrEmail = async (req: Request, res: Response) => {
     const newEmail: string = email;
 
     try {
-        if (!userId) {
+        if (!userId || isNaN(parseInt(userId, 10)) || !username || !email) {
             throw Object.assign(new Error(), {
                 status: 400,
-                message: "Le paramètre userId est absent du corps de la requête",
-            });
-        }
-
-        if (isNaN(parseInt(userId, 10))) {
-            throw Object.assign(new Error(), {
-                status: 400,
-                message: "Le paramètre userId doit être un nombre valide",
-            });
-        }
-
-        if (!username || !email) {
-            throw Object.assign(new Error(), {
-                status: 400,
-                message: "Le champ username et/ou email est absent de la requête",
-            });
-        }
-
-        if (!normalizedNewUsername || !newEmail) {
-            throw Object.assign(new Error(), {
-                status: 400,
-                message: "Champs non définis dans le corps de la requête",
-                exemple: `username: "JohnDoe", email: "Johndoe7654@gmail.com"`,
+                message: "Paramètres de requête invalides",
             });
         }
 
@@ -240,13 +215,6 @@ export const editUsernameOrEmail = async (req: Request, res: Response) => {
             throw Object.assign(new Error(), {
                 status: 400,
                 message: "Les nouveaux username et email sont identiques aux précédents",
-            });
-        }
-
-        if (!normalizedNewUsername && !newEmail) {
-            throw Object.assign(new Error(), {
-                status: 400,
-                message: "Le nom d'utilisateur et l'email ne sont pas définis",
             });
         }
 
@@ -275,7 +243,7 @@ export const editUsernameOrEmail = async (req: Request, res: Response) => {
         }
 
         // search the new email in database, if it already exist, we throw an error
-        const existingEmail = await prisma.users.findUnique({ where: { email: newEmail } });
+        const existingEmail = await prisma.users.findUnique({ where: { email: newEmail }, select: { email: true } });
 
         if (existingEmail && existingEmail.email !== formerUser.email) {
             throw Object.assign(new Error(), {
@@ -310,23 +278,10 @@ export const editPassword = async (req: Request, res: Response) => {
     const { formerPassword, newPassword }: { formerPassword: string; newPassword: string } = req.body;
 
     try {
-        if (!userId) {
+        if (!userId || isNaN(parseInt(userId, 10)) || !formerPassword || !newPassword) {
             throw Object.assign(new Error(), {
                 status: 400,
-                message: "Le paramètre userId est absent du corps de la requête",
-            });
-        }
-        if (isNaN(parseInt(userId, 10))) {
-            throw Object.assign(new Error(), {
-                status: 400,
-                message: "Le paramètre userId doit être un nombre valide",
-            });
-        }
-
-        if (!formerPassword || !newPassword) {
-            throw Object.assign(new Error(), {
-                status: 400,
-                message: "Ancien mot de passe / nouveau mot de passe absent(s) de la requête",
+                message: "Paramètres de requête invalides",
             });
         }
 
@@ -365,6 +320,8 @@ export const editPassword = async (req: Request, res: Response) => {
                 },
             });
 
+            // return a 204 status code to say we proceeded the request
+            // but there's nothing to return
             return res.status(204).send();
         }
     } catch (error: any) {
@@ -470,29 +427,28 @@ export const deleteUser = async (req: Request, res: Response) => {
                 message: "Mot de passe incorrect",
             });
         } else if (passwordMatch) {
-            await prisma.userSuccess.deleteMany({
-                where: {
-                    userId: parseInt(userId, 10),
-                },
-            });
-
-            await prisma.userTasks.deleteMany({
-                where: {
-                    userId: parseInt(userId, 10),
-                },
-            });
-
-            await prisma.yol.deleteMany({
-                where: {
-                    userId: parseInt(userId, 10),
-                },
-            });
-
-            await prisma.users.delete({
-                where: {
-                    id: parseInt(userId, 10),
-                },
-            });
+            await prisma.$transaction([
+                prisma.userSuccess.deleteMany({
+                    where: {
+                        userId: parseInt(userId, 10),
+                    },
+                }),
+                prisma.userTasks.deleteMany({
+                    where: {
+                        userId: parseInt(userId, 10),
+                    },
+                }),
+                prisma.yol.deleteMany({
+                    where: {
+                        userId: parseInt(userId, 10),
+                    },
+                }),
+                prisma.users.delete({
+                    where: {
+                        id: parseInt(userId, 10),
+                    },
+                }),
+            ]);
 
             return res.status(204).send();
         }
