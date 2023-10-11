@@ -423,17 +423,10 @@ export const deleteCustomTask = async (req: Request, res: Response) => {
     const taskId: string = req.params.taskId;
 
     try {
-        if (!taskId) {
+        if (!taskId || isNaN(parseInt(taskId, 10))) {
             throw Object.assign(new Error(), {
                 status: 400,
-                message: "Le paramètre taskId est absent de la requête",
-            });
-        }
-
-        if (isNaN(parseInt(taskId, 10))) {
-            throw Object.assign(new Error(), {
-                status: 400,
-                message: "Le paramètre taskId doit être un nombre valide",
+                message: "Le paramètre taskId est absent de la requête ou n'est pas un nombre valide",
             });
         }
 
@@ -463,9 +456,9 @@ export const deleteCustomTask = async (req: Request, res: Response) => {
             },
         });
 
-        res.status(200).json({ message: "Tâche supprimée 🔫", task });
+        res.status(204).json();
     } catch (error: any) {
-        res.status(500).json({ erreur: "Erreur lors de la suppression de la tâche 😕" });
+        res.status(error.status || 500).json({ erreur: error.message || "Erreur lors de la suppression de la tâche" });
     }
 };
 
