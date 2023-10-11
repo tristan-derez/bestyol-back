@@ -10,8 +10,8 @@ const port = process.env.PORT || 3000;
 
 const server = http.createServer(app);
 
-// call newActiveDaily everyday at 12:05am
-cron.schedule("5 0 * * *", () => {
+// call newActiveDaily everyday at 11:30pm
+cron.schedule("30 21 * * *", () => {
     newActiveDaily(6);
 });
 
