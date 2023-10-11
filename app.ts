@@ -11,7 +11,6 @@ import speciesRoutes from "./routes/Species";
 const app: Express = express();
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 const allowedOrigin: string = process.env.CORS_ALLOWED_ORIGIN as string;
 
