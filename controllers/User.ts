@@ -58,11 +58,10 @@ export const signup = async (req: Request, res: Response) => {
 
         return res.status(201).json({
             user,
-            message: "Inscription réussie! 🥳🎊",
             accessToken: accessToken,
         });
     } catch (error: any) {
-        return res.status(error.status || 500).json({ erreur: error.message || "Erreur interne 😔" });
+        return res.status(error.status || 500).json({ erreur: error.message || "Erreur interne" });
     }
 };
 
@@ -94,7 +93,7 @@ export const login = async (req: Request, res: Response) => {
         if (!user) {
             throw Object.assign(new Error(), {
                 status: 401,
-                message: "Identifiants non valides 😢",
+                message: "Identifiants non valides",
             });
         }
 
@@ -107,17 +106,16 @@ export const login = async (req: Request, res: Response) => {
 
             return res.status(200).json({
                 user: userWithoutPassword,
-                message: "Connexion réussie! 🥳",
                 accessToken: accessToken,
             });
         } else {
             throw Object.assign(new Error(), {
                 status: 401,
-                message: "Identifiants non valides 😢",
+                message: "Identifiants non valides",
             });
         }
     } catch (error: any) {
-        return res.status(error.status || 500).json({ erreur: error.message || "Erreur interne 😔" });
+        return res.status(error.status || 500).json({ erreur: error.message || "Erreur interne" });
     }
 };
 
@@ -128,7 +126,7 @@ export const refreshAccessToken = async (req: Request, res: Response) => {
         if (!token) {
             throw Object.assign(new Error(), {
                 status: 401,
-                message: "Erreur d'authentification 😔",
+                message: "Erreur d'authentification",
             });
         }
 
@@ -141,7 +139,7 @@ export const refreshAccessToken = async (req: Request, res: Response) => {
         if (!user) {
             throw Object.assign(new Error(), {
                 status: 401,
-                message: "Erreur d'authentification 😔",
+                message: "Erreur d'authentification",
             });
         }
 
@@ -255,14 +253,14 @@ export const editUsernameOrEmail = async (req: Request, res: Response) => {
         if (normalizedNewUsername === formerUser.username) {
             throw Object.assign(new Error(), {
                 status: 400,
-                message: "le nouveau nom d'utilisateur est indentique au précedent",
+                message: "le nouveau nom d'utilisateur est identique au précedent",
             });
         }
 
         if (email === formerUser.email) {
             throw Object.assign(new Error(), {
                 status: 400,
-                message: "Le nouvel email indentique au précedent",
+                message: "Le nouvel email est identique au précedent",
             });
         }
 
@@ -301,7 +299,7 @@ export const editUsernameOrEmail = async (req: Request, res: Response) => {
             },
         });
 
-        return res.status(200).json({ message: "Informations de l'utilisateur modifiées avec succès", updatedUser });
+        return res.status(200).json({ updatedUser });
     } catch (error: any) {
         return res.status(error.status || 500).json({ erreur: error.message || "Erreur interne" });
     }
@@ -367,7 +365,7 @@ export const editPassword = async (req: Request, res: Response) => {
                 },
             });
 
-            return res.status(200).json({ message: "Mot de passe modifié avec succès" });
+            return res.status(204).send();
         }
     } catch (error: any) {
         return res.status(error.status || 500).json({ erreur: error.message || "Erreur interne" });
@@ -422,7 +420,7 @@ export const editPicture = async (req: Request, res: Response) => {
             });
         }
 
-        return res.json({ message: "L'image de profil a bien été modifiée !", updatedUser });
+        return res.status(200).json({ updatedUser });
     } catch (error: any) {
         return res.status(error.status || 500).json({ erreur: error.message || "Erreur interne" });
     }
@@ -496,7 +494,7 @@ export const deleteUser = async (req: Request, res: Response) => {
                 },
             });
 
-            return res.status(200).json({ message: "L'utilisateur a bien été supprimé" });
+            return res.status(204).send();
         }
     } catch (error: any) {
         return res.status(error.status || 500).json({ message: error.message || "Erreur interne" });

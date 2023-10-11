@@ -10,7 +10,7 @@ export const createYol = async (req: Request, res: Response) => {
     if (!name || !userId || !speciesId) {
         return res.status(400).json({
             erreur: "Certains champs requis sont absents du corps de la requête",
-            example: {
+            exemple: {
                 name: "Pierre",
                 userId: 327,
                 speciesId: 3,
