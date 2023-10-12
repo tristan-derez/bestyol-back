@@ -201,64 +201,49 @@ export const editUsernameOrEmail = async (req: Request, res: Response) => {
                 message: "Paramètres de requête invalides",
             });
         }
-
         const formerUser = await prisma.users.findUnique({ where: { id: parseInt(userId, 10) } });
 
         if (!formerUser) {
             throw Object.assign(new Error(), {
                 status: 404,
-                message: "Utilisateur introuvable",
+                message: "Utilisateur non trouvé",
             });
         }
 
-        if (normalizedNewUsername === formerUser.username && email === formerUser.email) {
-            throw Object.assign(new Error(), {
-                status: 400,
-                message: "Les nouveaux username et email sont identiques aux précédents",
+        // Check if the new username is taken by another user
+        if (normalizedNewUsername !== formerUser.username) {
+            const existingUserWithNewUsername = await prisma.users.findUnique({
+                where: { username: normalizedNewUsername },
             });
+
+            if (existingUserWithNewUsername) {
+                throw Object.assign(new Error(), {
+                    status: 404,
+                    message: "Ce nom d'utilisateur n'est pas disponible",
+                });
+            }
         }
 
-        if (normalizedNewUsername === formerUser.username) {
-            throw Object.assign(new Error(), {
-                status: 400,
-                message: "le nouveau nom d'utilisateur est identique au précedent",
+        // Check if the new email is taken by another user
+        if (newEmail !== formerUser.email) {
+            const existingUserWithNewEmail = await prisma.users.findUnique({
+                where: { email: newEmail },
             });
+
+            if (existingUserWithNewEmail) {
+                throw Object.assign(new Error(), {
+                    status: 404,
+                    message: "Cette adresse e-mail n'est pas disponible",
+                });
+            }
         }
 
-        if (email === formerUser.email) {
-            throw Object.assign(new Error(), {
-                status: 400,
-                message: "Le nouvel email est identique au précedent",
-            });
-        }
-
-        // search the new username in database, if it already exist, we throw an error
-        const existingUsername = await prisma.users.findUnique({ where: { username: normalizedNewUsername } });
-
-        if (existingUsername && existingUsername.username !== formerUser.username) {
-            throw Object.assign(new Error(), {
-                status: 400,
-                message: "Ce nom d'utilisateur n'est pas disponible",
-            });
-        }
-
-        // search the new email in database, if it already exist, we throw an error
-        const existingEmail = await prisma.users.findUnique({ where: { email: newEmail }, select: { email: true } });
-
-        if (existingEmail && existingEmail.email !== formerUser.email) {
-            throw Object.assign(new Error(), {
-                status: 400,
-                message: "Cette adresse email est déjà utilisée par un autre utilisateur",
-            });
-        }
-
+        // Update the user's username and email
         const updatedUser = await prisma.users.update({
-            where: {
-                id: parseInt(userId, 10),
-            },
+            where: { id: formerUser.id },
             data: {
-                username: normalizedNewUsername ? { set: normalizedNewUsername } : undefined,
-                email: newEmail ? { set: newEmail } : undefined,
+                username: normalizedNewUsername || formerUser.username,
+                email: newEmail || formerUser.email,
             },
             select: {
                 id: true,
