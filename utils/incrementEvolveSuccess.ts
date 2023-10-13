@@ -15,7 +15,7 @@ export async function incrementEvolveSuccess(userId: number, formerStage: string
 
             if (matchingEggEvolutionSuccess === null) {
                 throw Object.assign(new Error(), {
-                    details: errorSuccess,
+                    message: errorSuccess,
                 });
             }
 
@@ -28,7 +28,7 @@ export async function incrementEvolveSuccess(userId: number, formerStage: string
 
             if (matchingEggEvolutionUserSuccess === null) {
                 throw Object.assign(new Error(), {
-                    details: errorUserSuccess,
+                    message: errorUserSuccess,
                 });
             }
 
@@ -47,7 +47,7 @@ export async function incrementEvolveSuccess(userId: number, formerStage: string
                 }
             } else {
                 throw Object.assign(new Error(), {
-                    details: errorAmount,
+                    message: errorAmount,
                 });
             }
             break;
@@ -61,7 +61,7 @@ export async function incrementEvolveSuccess(userId: number, formerStage: string
 
             if (matchingBabyEvolutionSuccess === null) {
                 throw Object.assign(new Error(), {
-                    details: errorSuccess,
+                    message: errorSuccess,
                 });
             }
 
@@ -74,7 +74,7 @@ export async function incrementEvolveSuccess(userId: number, formerStage: string
 
             if (matchingBabyEvolutionUserSuccess === null) {
                 throw Object.assign(new Error(), {
-                    details: errorUserSuccess,
+                    message: errorUserSuccess,
                 });
             }
 
@@ -93,7 +93,7 @@ export async function incrementEvolveSuccess(userId: number, formerStage: string
                 }
             } else {
                 throw Object.assign(new Error(), {
-                    details: errorAmount,
+                    message: errorAmount,
                 });
             }
             break;
@@ -107,7 +107,7 @@ export async function incrementEvolveSuccess(userId: number, formerStage: string
 
             if (matchingAdoEvolutionSuccess === null) {
                 throw Object.assign(new Error(), {
-                    details: errorSuccess,
+                    message: errorSuccess,
                 });
             }
 
@@ -120,7 +120,7 @@ export async function incrementEvolveSuccess(userId: number, formerStage: string
 
             if (matchingAdoEvolutionUserSuccess === null) {
                 throw Object.assign(new Error(), {
-                    details: errorUserSuccess,
+                    message: errorUserSuccess,
                 });
             }
 
@@ -139,7 +139,7 @@ export async function incrementEvolveSuccess(userId: number, formerStage: string
                 }
             } else {
                 throw Object.assign(new Error(), {
-                    details: errorAmount,
+                    message: errorAmount,
                 });
             }
             break;

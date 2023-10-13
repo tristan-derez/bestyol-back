@@ -4,26 +4,19 @@ import { prisma } from "../utils/prismaClient";
 
 //* GET
 export const getAllUserSuccessByUserId = async (req: Request, res: Response) => {
-    const userId: string = req.params.userId;
+    const userId: number = Number(req.params.userId);
 
     try {
-        if (!userId) {
+        if (!userId || isNaN(userId)) {
             throw Object.assign(new Error(), {
                 status: 400,
-                message: "Le paramètre userId est absent de la requête",
-            });
-        }
-
-        if (isNaN(parseInt(userId, 10))) {
-            throw Object.assign(new Error(), {
-                status: 400,
-                message: "Le paramètre userId doit être un nombre valide",
+                message: "userId est absent de la requête ou n'est pas un nombre valide",
             });
         }
 
         const userSuccess = await prisma.userSuccess.findMany({
             where: {
-                userId: parseInt(userId, 10),
+                userId: userId,
             },
             include: {
                 success: true,
@@ -33,58 +26,44 @@ export const getAllUserSuccessByUserId = async (req: Request, res: Response) => 
         if (userSuccess.length === 0) {
             throw Object.assign(new Error(), {
                 status: 404,
-                message: "Succès introuvables pour cet utilisateur 😢",
+                message: "Succès introuvables pour cet utilisateur",
             });
         }
 
         return res.status(200).json({ userSuccess });
     } catch (error: any) {
-        return res.status(error.status || 500).json({ erreur: error.message || "Erreur interne" });
+        return res.status(error.status || 500).json({ message: error.message || "Erreur interne" });
     }
 };
 
 //* PATCH
 export const validateSuccess = async (req: Request, res: Response) => {
-    const userSuccessId: string = req.params.id;
+    const userSuccessId: number = Number(req.params.id);
     const yolId: number = req.body.yolId;
 
     try {
-        if (!userSuccessId) {
+        if (!userSuccessId || isNaN(userSuccessId)) {
             throw Object.assign(new Error(), {
                 status: 400,
-                message: "Le paramètre userSuccessId est absent du corps de la requête",
-            });
-        }
-
-        if (isNaN(parseInt(userSuccessId, 10))) {
-            throw Object.assign(new Error(), {
-                status: 400,
-                message: "Le paramètre userSuccessId doit être un nombre valide",
+                message: "userSuccessId est absent de la requête ou n'est pas un nombre valide",
             });
         }
 
         if (!yolId) {
             throw Object.assign(new Error(), {
                 status: 400,
-                message: "Le paramètre yolId est absent du corps de la requête",
-            });
-        }
-
-        if (isNaN(yolId)) {
-            throw Object.assign(new Error(), {
-                status: 400,
-                message: "Le paramètre yolId doit être un nombre valide",
+                message: "yolId est absent du corps de la requête ou n'est pas un nombre valide",
             });
         }
 
         const userSuccess = await prisma.userSuccess.findUnique({
-            where: { id: parseInt(userSuccessId, 10) },
+            where: { id: userSuccessId },
         });
 
         if (!userSuccess) {
             throw Object.assign(new Error(), {
                 status: 404,
-                message: "Succès utilisateur introuvable 😢",
+                message: "Succès utilisateur introuvable",
             });
         }
 
@@ -117,26 +96,24 @@ export const validateSuccess = async (req: Request, res: Response) => {
             }
         }
 
-        await prisma.userSuccess.update({
-            where: { id: parseInt(userSuccessId, 10) },
-            data: { isCompleted: true },
-        });
+        await prisma.$transaction([
+            prisma.userSuccess.update({
+                where: { id: userSuccessId },
+                data: { isCompleted: true },
+            }),
+            prisma.yol.update({
+                where: { id: yolId },
+                data: { xp: { increment: matchingSuccess.successXp } },
+            }),
+        ]);
 
-        const updatedYol = await prisma.yol.update({
+        const updatedYol = await prisma.yol.findFirst({
             where: { id: yolId },
-            data: { xp: { increment: matchingSuccess.successXp } },
         });
 
-        if (!updatedYol) {
-            throw Object.assign(new Error(), {
-                status: 404,
-                message: "Erreur lors de l'ajout d'experience au Yol",
-            });
-        }
-
-        return res.status(200).json({ message: "Votre Yol a gagné de l'expérience !", yol: updatedYol });
+        return res.status(200).json({ yol: updatedYol });
     } catch (error: any) {
-        return res.status(error.status || 500).json({ erreur: error.message || "Erreur interne" });
+        return res.status(error.status || 500).json({ message: error.message || "Erreur interne" });
     }
 };
 

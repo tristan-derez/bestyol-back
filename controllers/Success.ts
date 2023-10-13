@@ -7,7 +7,7 @@ export const getAllSuccess = async (_req: Request, res: Response) => {
     try {
         const success: Success[] = await prisma.success.findMany();
 
-        if (success === null) {
+        if (!success) {
             throw Object.assign(new Error(), {
                 status: 404,
                 message: "Succès introuvables",
@@ -16,29 +16,22 @@ export const getAllSuccess = async (_req: Request, res: Response) => {
 
         return res.status(200).json({ success });
     } catch (error: any) {
-        return res.status(error.status || 500).json({ erreur: error.message || "Erreur interne" });
+        return res.status(error.status || 500).json({ message: error.message || "Erreur interne" });
     }
 };
 
 export const getOneSuccess = async (req: Request, res: Response) => {
-    const successId: string = req.params.id;
+    const successId: number = Number(req.params.id);
 
     try {
-        if (!successId) {
+        if (!successId || isNaN(successId)) {
             throw Object.assign(new Error(), {
                 status: 400,
-                message: "Requête invalide, exemple: paramètre manquant",
+                message: "successId est absent de la requête ou n'est pas un nombre valide",
             });
         }
 
-        if (isNaN(parseInt(successId, 10))) {
-            throw Object.assign(new Error(), {
-                status: 400,
-                message: "Le paramètre successId doit être un nombre valide",
-            });
-        }
-
-        const success = await prisma.success.findUnique({ where: { id: parseInt(successId, 10) } });
+        const success = await prisma.success.findUnique({ where: { id: successId } });
 
         if (!success) {
             throw Object.assign(new Error(), {
@@ -49,7 +42,7 @@ export const getOneSuccess = async (req: Request, res: Response) => {
 
         return res.status(200).json({ ...success });
     } catch (error: any) {
-        return res.status(error.status || 500).json({ erreur: error.message || "Erreur interne" });
+        return res.status(error.status || 500).json({ message: error.message || "Erreur interne" });
     }
 };
 

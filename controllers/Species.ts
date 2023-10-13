@@ -16,7 +16,7 @@ export const getAllSpecies = async (_req: Request, res: Response) => {
 
         return res.status(200).json({ species });
     } catch (error: any) {
-        return res.status(error.status || 500).json({ erreur: error.message || "Erreur interne" });
+        return res.status(error.status || 500).json({ message: error.message || "Erreur interne" });
     }
 };
 

@@ -7,14 +7,24 @@ import { incrementEvolveSuccess } from "../utils/incrementEvolveSuccess";
 export const createYol = async (req: Request, res: Response) => {
     const { name, userId, speciesId }: { name: string; userId: number; speciesId: number } = req.body;
 
+    // we prevent user from selecting
+    // something else than every species as egg
+    if (![1, 5, 9].includes(speciesId)) {
+        throw Object.assign(new Error(), {
+            status: 400,
+            message: "speciesId must be 1, 5, or 9",
+        });
+    }
+
     if (!name || !userId || !speciesId) {
-        return res.status(400).json({
-            erreur: "Certains champs requis sont absents du corps de la requête",
+        throw Object.assign(new Error(), {
+            status: 400,
             exemple: {
-                name: "Pierre",
+                name: "Pika",
                 userId: 327,
-                speciesId: 3,
+                speciesId: 1,
             },
+            message: "Certains champs requis sont absents du corps de la requête",
         });
     }
 
@@ -33,26 +43,28 @@ export const createYol = async (req: Request, res: Response) => {
 
         return res.status(200).json({ yol });
     } catch (error: any) {
-        return res.status(404).json({ erreur: error });
+        const errorMessage = error.message || "Erreur interne";
+        const errorStatus = error.status || 500;
+        const errorExample = error.exemple || null;
+        return res.status(errorStatus).json({ message: errorMessage, exemple: errorExample });
     }
 };
 
 //* GET
 export const getOneYol = async (req: Request, res: Response) => {
-    const yolId: string = req.params.yolId;
+    const yolId: number = Number(req.params.yolId);
 
-    if (!yolId) {
-        return res.status(400).json({ erreur: "yolId est absent des paramètres de la requête" });
-    }
-
-    if (isNaN(parseInt(yolId, 10))) {
-        return res.status(400).json({ erreur: "yolId doit être un nombre valide" });
+    if (!yolId || isNaN(yolId)) {
+        throw Object.assign(new Error(), {
+            status: 400,
+            message: "yolId est absent de la requête ou n'est pas un nombre valide",
+        });
     }
 
     try {
         const yol = await prisma.yol.findUnique({
             where: {
-                id: parseInt(yolId, 10),
+                id: yolId,
             },
             include: {
                 species: true,
@@ -61,30 +73,29 @@ export const getOneYol = async (req: Request, res: Response) => {
 
         return res.status(200).json({ yol });
     } catch (error: any) {
-        return res.status(404).json({ erreur: error });
+        const errorMessage = error.message || "Erreur interne";
+        const errorStatus = error.status || 500;
+        return res.status(errorStatus).json({ message: errorMessage });
     }
 };
 
 export const getOneYolByUserId = async (req: Request, res: Response) => {
-    const userId: string = req.params.userId;
+    const userId: number = Number(req.params.userId);
     const xpToReachLevelThree = 250;
     const xpToReachLevelTen = 2700;
     const xpToReachLevelTwenty = 10450;
 
-    if (!userId) {
-        res.status(400).json({ erreur: "userId est absent des paramètres de la requête" });
-        return;
-    }
-
-    if (isNaN(parseInt(userId, 10))) {
-        res.status(400).json({ erreur: "yolId doit être un nombre valide" });
-        return;
+    if (!userId || isNaN(userId)) {
+        throw Object.assign(new Error(), {
+            status: 400,
+            message: "userId est absent de la requête ou n'est pas un nombre valide",
+        });
     }
 
     try {
         const yol = await prisma.yol.findMany({
             where: {
-                userId: parseInt(userId, 10),
+                userId: userId,
             },
             include: {
                 species: true,
@@ -98,7 +109,7 @@ export const getOneYolByUserId = async (req: Request, res: Response) => {
         if (yol[0].xp >= xpToReachLevelThree) {
             const yolLevelThreeUserSuccess = await prisma.userSuccess.findFirst({
                 where: {
-                    userId: parseInt(userId, 10),
+                    userId: userId,
                     successId: 17,
                 },
             });
@@ -121,7 +132,7 @@ export const getOneYolByUserId = async (req: Request, res: Response) => {
         if (yol[0].xp >= xpToReachLevelTen) {
             const yolLevelTenUserSuccess = await prisma.userSuccess.findFirst({
                 where: {
-                    userId: parseInt(userId, 10),
+                    userId: userId,
                     successId: 18,
                 },
             });
@@ -144,7 +155,7 @@ export const getOneYolByUserId = async (req: Request, res: Response) => {
         if (yol[0].xp >= xpToReachLevelTwenty) {
             const yolLevelTwentyUserSuccess = await prisma.userSuccess.findFirst({
                 where: {
-                    userId: parseInt(userId, 10),
+                    userId: userId,
                     successId: 19,
                 },
             });
@@ -166,54 +177,61 @@ export const getOneYolByUserId = async (req: Request, res: Response) => {
 
         return res.status(200).json(yol[0]);
     } catch (error: any) {
-        return res.status(500).json({ erreur: error });
+        return res.status(500).json({ message: error });
     }
 };
 
 //* PATCH
 export const evolve = async (req: Request, res: Response) => {
-    const yolId: string = req.params.yolId;
+    const yolId: number = Number(req.params.yolId);
 
-    if (!yolId) {
-        res.status(400).json({ details: "yolId est absent des paramètres de la requête" });
-        return;
-    }
-
-    if (isNaN(parseInt(yolId, 10))) {
-        res.status(400).json({ details: "yolId doit être un nombre valide" });
-        return;
+    if (!yolId || isNaN(yolId)) {
+        throw Object.assign(new Error(), {
+            status: 400,
+            message: "yolId est absent de la requête ou n'est pas un nombre valide",
+        });
     }
 
     try {
         const yolInfo = await prisma.yol.findFirst({
             where: {
-                id: parseInt(yolId, 10),
+                id: yolId,
             },
             include: {
                 species: true,
             },
         });
 
-        switch (yolInfo?.species.stage) {
+        if (!yolInfo) {
+            throw Object.assign(new Error(), {
+                status: 404,
+                message: "Le Yol est introuvable",
+            });
+        }
+
+        switch (yolInfo.species.stage) {
             case "Egg":
                 if (yolInfo.xp >= 100) {
                     const matchingSpeciesBabyStage = await prisma.species.findFirst({
                         where: {
-                            name: yolInfo?.species.name,
+                            name: yolInfo.species.name,
                             stage: "Baby",
                         },
                     });
 
-                    if (matchingSpeciesBabyStage === null) {
-                        throw Object.assign(new Error(), { details: "Espèce de l'évolution introuvable" });
+                    if (!matchingSpeciesBabyStage) {
+                        throw Object.assign(new Error(), {
+                            status: 404,
+                            message: "Évolution introuvable",
+                        });
                     }
 
                     const yolBaby = await prisma.yol.update({
                         where: {
-                            id: parseInt(yolId, 10),
+                            id: yolId,
                         },
                         data: {
-                            speciesId: matchingSpeciesBabyStage?.id,
+                            speciesId: matchingSpeciesBabyStage.id,
                         },
                         include: {
                             species: true,
@@ -226,31 +244,30 @@ export const evolve = async (req: Request, res: Response) => {
                 } else {
                     throw Object.assign(new Error(), {
                         status: 400,
-                        details: "Le Yol n'a pas l'xp requise pour évoluer",
+                        message: "Le Yol n'a pas l'xp requise pour évoluer",
                         xpNeeded: 100,
                         xpYol: yolInfo?.xp,
                     });
                 }
-
             case "Baby":
                 if (yolInfo.xp >= 700) {
                     const matchingSpeciesAdolescentStage = await prisma.species.findFirst({
                         where: {
-                            name: yolInfo?.species.name,
+                            name: yolInfo.species.name,
                             stage: "Adolescent",
                         },
                     });
 
-                    if (matchingSpeciesAdolescentStage === null) {
-                        throw Object.assign(new Error(), { details: "Espèce de l'évolution introuvable" });
+                    if (!matchingSpeciesAdolescentStage) {
+                        throw Object.assign(new Error(), { message: "Espèce de l'évolution introuvable" });
                     }
 
                     const yolAdo = await prisma.yol.update({
                         where: {
-                            id: parseInt(yolId, 10),
+                            id: yolId,
                         },
                         data: {
-                            speciesId: matchingSpeciesAdolescentStage?.id,
+                            speciesId: matchingSpeciesAdolescentStage.id,
                         },
                         include: {
                             species: true,
@@ -263,9 +280,9 @@ export const evolve = async (req: Request, res: Response) => {
                 } else {
                     throw Object.assign(new Error(), {
                         status: 400,
-                        details: "Le Yol n'a pas l'xp requise pour évoluer",
+                        message: "Le Yol n'a pas l'xp requise pour évoluer",
                         xpNeeded: 700,
-                        xpYol: yolInfo?.xp,
+                        xpYol: yolInfo.xp,
                     });
                 }
 
@@ -278,13 +295,13 @@ export const evolve = async (req: Request, res: Response) => {
                         },
                     });
 
-                    if (matchingSpeciesFinalStage === null) {
-                        throw Object.assign(new Error(), { details: "Espèce de l'évolution introuvable" });
+                    if (!matchingSpeciesFinalStage) {
+                        throw Object.assign(new Error(), { message: "Espèce de l'évolution introuvable" });
                     }
 
                     const yolFinal = await prisma.yol.update({
                         where: {
-                            id: parseInt(yolId, 10),
+                            id: yolId,
                         },
                         data: {
                             speciesId: matchingSpeciesFinalStage?.id,
@@ -300,21 +317,20 @@ export const evolve = async (req: Request, res: Response) => {
                 } else {
                     throw Object.assign(new Error(), {
                         status: 400,
-                        details: "Le Yol n'a pas l'xp requise pour évoluer",
+                        message: "Le Yol n'a pas l'xp requise pour évoluer",
                         xpNeeded: 1750,
-                        xpYol: yolInfo?.xp,
+                        xpYol: yolInfo.xp,
                     });
                 }
 
             case "Final":
-                res.status(400).json({ details: "Votre Yol est au stade final, il ne peut plus évoluer !" });
+                res.status(400).json({ message: "Votre Yol est au stade final, il ne peut plus évoluer !" });
                 break;
 
             default:
                 return;
         }
     } catch (error: any) {
-        console.log(error.message);
         const { status, ...errorWithoutStatus } = error;
         return res.status(error.status || 500).json(errorWithoutStatus);
     }

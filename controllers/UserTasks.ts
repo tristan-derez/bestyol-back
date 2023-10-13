@@ -46,7 +46,7 @@ export const createUserCustomTask = async (req: AuthenticatedRequest, res: Respo
 
         return res.status(201).json({ userTask });
     } catch (error: any) {
-        return res.status(error.status || 500).json({ erreur: error.message || "Erreur lors de la création de la tâche" });
+        return res.status(error.status || 500).json({ message: error.message || "Erreur lors de la création de la tâche" });
     }
 };
 
@@ -109,7 +109,7 @@ export const createUserDailyTasks = async (req: AuthenticatedRequest, res: Respo
 
         res.status(200).json({ userTasks });
     } catch (error: any) {
-        res.status(error.status || 500).json({ erreur: error.message || "Erreur lors de l'assignation des tâches quotidiennes à l'utilisateur" });
+        res.status(error.status || 500).json({ message: error.message || "Erreur lors de l'assignation des tâches quotidiennes à l'utilisateur" });
     }
 };
 
@@ -148,7 +148,7 @@ export const getUserTasks = async (req: AuthenticatedRequest, res: Response) => 
         res.status(200).json({ customTasks, dailyTasks });
     } catch (error: any) {
         res.status(error.status || 500).json({
-            erreur: error.message || "Une erreur est survenue lors de la récupération des tâches de l'utilisateur",
+            message: error.message || "Une message est survenue lors de la récupération des tâches de l'utilisateur",
         });
     }
 };
@@ -177,7 +177,7 @@ export const changeTitleCustomTask = async (req: Request, res: Response) => {
 
         res.status(200).json({ updatedTask });
     } catch (error: any) {
-        res.status(error.status || 500).json({ erreur: error.message || "Erreur lors du changement de titre" });
+        res.status(error.status || 500).json({ message: error.message || "Erreur lors du changement de titre" });
     }
 };
 
@@ -321,7 +321,7 @@ export const validateDailyTask = async (req: Request, res: Response) => {
 
         return res.status(200).json({ yolXpGain: userTask.dailyTask?.xp, updatedTask });
     } catch (error: any) {
-        return res.status(error.status || 500).json({ erreur: error.message || "Erreur interne" });
+        return res.status(error.status || 500).json({ message: error.message || "Erreur interne" });
     }
 };
 
@@ -446,7 +446,7 @@ export const deleteCustomTask = async (req: Request, res: Response) => {
         if (task.isDaily) {
             throw Object.assign(new Error(), {
                 status: 401,
-                details: "La tâche utilisateur est une tâche quotidienne et ne peut pas être supprimée",
+                message: "La tâche utilisateur est une tâche quotidienne et ne peut pas être supprimée",
             });
         }
 
@@ -458,7 +458,7 @@ export const deleteCustomTask = async (req: Request, res: Response) => {
 
         res.status(204).json();
     } catch (error: any) {
-        res.status(error.status || 500).json({ erreur: error.message || "Erreur lors de la suppression de la tâche" });
+        res.status(error.status || 500).json({ message: error.message || "Erreur lors de la suppression de la tâche" });
     }
 };
 

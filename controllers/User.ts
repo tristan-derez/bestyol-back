@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import jwt, { JwtPayload } from "jsonwebtoken";
-import userSuccess from "../controllers/UserSuccess";
 
 import { AuthenticatedRequest } from "../middlewares/idValidation";
 
@@ -64,7 +63,7 @@ export const signup = async (req: Request, res: Response) => {
             accessToken: accessToken,
         });
     } catch (error: any) {
-        return res.status(error.status || 500).json({ erreur: error.message || "Erreur interne" });
+        return res.status(error.status || 500).json({ message: error.message || "Erreur interne" });
     }
 };
 
@@ -112,7 +111,7 @@ export const login = async (req: Request, res: Response) => {
             accessToken: accessToken,
         });
     } catch (error: any) {
-        return res.status(error.status || 500).json({ erreur: error.message || "Erreur interne" });
+        return res.status(error.status || 500).json({ message: error.message || "Erreur interne" });
     }
 };
 
@@ -144,31 +143,24 @@ export const refreshAccessToken = async (req: Request, res: Response) => {
 
         res.status(200).send({ accessToken: refreshedToken });
     } catch (error: any) {
-        return res.status(error.status || 500).json({ erreur: error.message || "Erreur interne" });
+        return res.status(error.status || 500).json({ message: error.message || "Erreur interne" });
     }
 };
 
 //* GET
 export const getUser = async (req: AuthenticatedRequest, res: Response) => {
-    const userId: string = req.params.userId;
+    const userId: number = Number(req.params.userId);
 
     try {
-        if (!userId) {
+        if (!userId || isNaN(userId)) {
             throw Object.assign(new Error(), {
                 status: 400,
-                message: "Le paramètre userId est absent du corps de la requête",
-            });
-        }
-
-        if (isNaN(parseInt(userId, 10))) {
-            throw Object.assign(new Error(), {
-                status: 400,
-                message: "Le paramètre userId doit être un nombre valide",
+                message: "Le paramètre userId est absent de la requête ou n'est pas un nombre valide",
             });
         }
 
         const user = await prisma.users.findUnique({
-            where: { id: parseInt(userId, 10) },
+            where: { id: userId },
             select: { id: true, pp: true, banner: true, email: true, username: true, createdAt: true },
         });
 
@@ -181,7 +173,7 @@ export const getUser = async (req: AuthenticatedRequest, res: Response) => {
 
         res.status(200).json({ ...user });
     } catch (error: any) {
-        res.status(error.status || 500).json({ erreur: error.message || "Erreur interne" });
+        res.status(error.status || 500).json({ message: error.message || "Erreur interne" });
     }
 };
 
@@ -254,7 +246,7 @@ export const editUsernameOrEmail = async (req: Request, res: Response) => {
 
         return res.status(200).json({ updatedUser });
     } catch (error: any) {
-        return res.status(error.status || 500).json({ erreur: error.message || "Erreur interne" });
+        return res.status(error.status || 500).json({ message: error.message || "Erreur interne" });
     }
 };
 
@@ -310,7 +302,7 @@ export const editPassword = async (req: Request, res: Response) => {
             return res.status(204).send();
         }
     } catch (error: any) {
-        return res.status(error.status || 500).json({ erreur: error.message || "Erreur interne" });
+        return res.status(error.status || 500).json({ message: error.message || "Erreur interne" });
     }
 };
 
@@ -364,7 +356,7 @@ export const editPicture = async (req: Request, res: Response) => {
 
         return res.status(200).json({ updatedUser });
     } catch (error: any) {
-        return res.status(error.status || 500).json({ erreur: error.message || "Erreur interne" });
+        return res.status(error.status || 500).json({ message: error.message || "Erreur interne" });
     }
 };
 
