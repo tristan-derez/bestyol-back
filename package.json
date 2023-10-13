@@ -22,7 +22,7 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "@prisma/client": "^4.16.2",
+        "@prisma/client": "^5.4.2",
         "bcryptjs": "^2.4.3",
         "cors": "^2.8.5",
         "date-fns": "^2.30.0",
@@ -44,7 +44,7 @@
         "@types/node-cron": "^3.0.9",
         "@types/pg": "^8.6.6",
         "nodemon": "^2.0.22",
-        "prisma": "^5.4.1",
+        "prisma": "^5.4.2",
         "ts-node": "^10.9.1",
         "tslib": "^2.5.0",
         "typescript": "^5.0.4"
