@@ -1,11 +1,25 @@
 # Bestyol backend
 
+Backend for the BestYol web app.
+
+## Table Of Contents
+
+-   [Table Of Contents](#table-of-contents)
+-   [Techs](#Techs)
+-   [Getting Started](#getting-started)
+-   [Requirements](#requirements)
+-   [Ínstallation](#installation)
+-   [Local](#local)
+-   [Docker (optional)](#docker-optional)
+
 ## Techs
 
 -   [Express](https://expressjs.com/en/5x/api.html) with [Typescript](https://www.typescriptlang.org/docs/)
 -   [Prisma](https://www.prisma.io/docs)
 
-## Requirements
+## Getting started
+
+### Requirements
 
 -   [Node.js installed with NPM](https://nodejs.org/en/download/package-manager)
 -   a PostgreSQL database (if you're not using docker-compose)
@@ -14,55 +28,71 @@ If you want to build the backend + database as a docker image:
 
 -   [Docker](https://www.docker.com/)
 
-## Installation
+### Installation
+
+1 - Install modules
 
 ```bash
 npm i
 ```
 
-## Usage
+2 - Make sure to create an env file from .env.example.
 
-dev env:
-
-```bash
-npm run dev
-```
-
-build:
-
-```bash
-npm run build
-```
-
-prod:
-
-```bash
-npm run start
-```
-
-## Docker setup (optional)
-
-1 - Make sure to create an env file from .env.example.
-
-2 - Create two [random UUID](https://developer.mozilla.org/en-US/docs/Web/API/Crypto/randomUUID) and **_add it to env file_** to both tokens, both should be different
+3 - Create two [random UUID](https://developer.mozilla.org/en-US/docs/Web/API/Crypto/randomUUID) and **_add it to env file_** to both tokens, both should be different
 
 ```js
 crypto.randomUUID();
 ```
 
-3 - Run build command:
+### Local
+
+If you already have a local database or use a service like [Neon](https://neon.tech/)
+
+1 - Generate Prisma client
+
+```bash
+npx prisma generate
+```
+
+2 - Run build command :
 
 ```bash
 npm run build
 ```
 
-4 - Build the bestyol-back image with this command:
+3 - Push schema to database
+
+```bash
+npx prisma db push
+```
+
+4 - Seed database
+
+```bash
+node dist/prisma/seed.ts
+```
+
+5 - Start server
+
+```bash
+npm run build
+```
+
+### Docker (optional)
+
+1 - Run build command:
+
+```bash
+npm run build
+```
+
+2 - Build the bestyol-back image with this command:
 
 ```bash
 docker build -t bestyol-back .
 ```
 
-5 - Build/run the container:
+3 - Build/run the container:
 
 ```bash
 docker-compose up -d
