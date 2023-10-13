@@ -36,7 +36,7 @@ If you want to build the backend + database as a docker image:
 npm i
 ```
 
-2 - Make sure to create an env file from .env.example.
+2 - **Make sure to create an env file from .env.example**
 
 3 - Create two [random UUID](https://developer.mozilla.org/en-US/docs/Web/API/Crypto/randomUUID) and **_add it to env file_** to both tokens, both should be different
 
@@ -80,19 +80,21 @@ npm run build
 
 ### Docker (optional)
 
-1 - Run build command:
+Either use :
 
 ```bash
-npm run build
+npm run dockerize
 ```
 
-2 - Build the bestyol-back image with this command:
+Or do it manually with these steps:
+
+1 - Build the bestyol-back image with this command:
 
 ```bash
 docker build -t bestyol-back .
 ```
 
-3 - Build/run the container:
+2 - Build/run the container:
 
 ```bash
 docker-compose up -d
