@@ -2,11 +2,7 @@ FROM node:20.6.0
 
 WORKDIR /bestyol-back
 
-COPY package*.json ./
-COPY tsconfig.json ./
-COPY prisma prisma/
-COPY .env ./
-COPY dist dist/
+COPY . .
 # install node modules
 RUN npm install
 # generate prisma client
@@ -15,7 +11,7 @@ RUN npx prisma generate
 RUN npm run build
 
 # copy and run entrypoint
-COPY entrypoint.sh /bestyol-back/entrypoint.sh
-RUN chmod +x /bestyol-back/entrypoint.sh
+COPY entrypoint.sh .
+RUN chmod +x entrypoint.sh
 
 CMD ["/bestyol-back/entrypoint.sh"]
