@@ -8,7 +8,7 @@ Backend for the BestYol web app.
 -   [Techs](#Techs)
 -   [Getting Started](#getting-started)
 -   [Requirements](#requirements)
--   [Ínstallation](#installation)
+-   [Installation](#installation)
 -   [Local](#local)
 -   [Docker (optional)](#docker-optional)
 
