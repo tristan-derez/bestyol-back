@@ -59,7 +59,7 @@ npm run build
 4 - Build the bestyol-back image with this command:
 
 ```bash
-docker build -t bestyol-back
+docker build -t bestyol-back .
 ```
 
 5 - Build/run the container:
