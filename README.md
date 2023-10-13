@@ -22,11 +22,24 @@ Backend for the BestYol web app.
 ### Requirements
 
 -   [Node.js installed with NPM](https://nodejs.org/en/download/package-manager)
--   a PostgreSQL database (if you're not using docker-compose)
 
-If you want to build the backend + database as a docker image:
+#### options
+
+##### Docker
+
+With this option you just have to follow instruction [here](#docker-optional)
 
 -   [Docker](https://www.docker.com/)
+
+##### PostgreSQL
+
+Either build your own database on your machine
+
+-   [PostgreSQL](https://www.postgresql.org/download/)
+
+Or use an online solution
+
+-   [Neon](https://neon.tech/)
 
 ### Installation
 
