@@ -16,7 +16,8 @@
     "scripts": {
         "build": "npx tsc",
         "start": "node dist/server.js",
-        "dev": "nodemon server.ts"
+        "dev": "nodemon server.ts",
+        "dockerize": "docker build -t bestyol-back . && docker-compose up -d"
     },
     "keywords": [],
     "author": "",
