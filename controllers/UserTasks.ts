@@ -51,23 +51,23 @@ export const createUserCustomTask = async (req: AuthenticatedRequest, res: Respo
 };
 
 export const createUserDailyTasks = async (req: AuthenticatedRequest, res: Response) => {
-    const userId: string = req.params.userId;
+    const userId: number = Number(req.params.userId);
 
     const today: Date = new Date();
     const startOfToday: number | Date = startOfDay(today);
     const endOfToday: number | Date = endOfDay(today);
 
     try {
-        if (!userId || isNaN(parseInt(userId, 10))) {
+        if (!userId || isNaN(userId)) {
             throw Object.assign(new Error(), {
                 status: 400,
-                message: "Le paramètre userId est absent de la requête et/ou doit être un nombre valide",
+                message: "Le paramètre userId est absent de la requête et n'est pas un nombre valide",
             });
         }
 
         const existingDailyTasks = await prisma.userTasks.findFirst({
             where: {
-                userId: parseInt(userId, 10),
+                userId: userId,
                 isDaily: true,
                 createdAt: {
                     gte: startOfToday,
@@ -77,8 +77,7 @@ export const createUserDailyTasks = async (req: AuthenticatedRequest, res: Respo
         });
 
         if (existingDailyTasks) {
-            res.status(200).json({ existingDailyTasks });
-            return;
+            return res.status(200).json({ existingDailyTasks });
         }
 
         const tasks: DailyTasks[] = await prisma.dailyTasks.findMany({
@@ -86,6 +85,10 @@ export const createUserDailyTasks = async (req: AuthenticatedRequest, res: Respo
                 isActive: true,
             },
         });
+
+        if (!tasks) {
+            newActiveDaily(6);
+        }
 
         const userTasks: UserTasks[] = [];
 
@@ -96,7 +99,7 @@ export const createUserDailyTasks = async (req: AuthenticatedRequest, res: Respo
                     isDaily: true,
                     isCompleted: false,
                     completedAt: null,
-                    userId: parseInt(userId, 10),
+                    userId: userId,
                     dailyTaskId: task.id,
                 },
                 include: {
