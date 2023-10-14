@@ -325,6 +325,7 @@ async function main() {
             category: "Besoins vitaux",
             difficulty: 1,
             xp: 10,
+            isActive: false,
             successId: 1,
         },
     });
@@ -338,6 +339,7 @@ async function main() {
             category: "Besoins vitaux",
             difficulty: 3,
             xp: 40,
+            isActive: false,
             successId: 2,
         },
     });
@@ -351,6 +353,7 @@ async function main() {
             category: "Sport",
             difficulty: 3,
             xp: 40,
+            isActive: false,
             successId: 3,
         },
     });
@@ -364,6 +367,7 @@ async function main() {
             category: "Apprentissage",
             difficulty: 2,
             xp: 20,
+            isActive: false,
             successId: 4,
         },
     });
@@ -377,6 +381,7 @@ async function main() {
             category: "Relaxation",
             difficulty: 1,
             xp: 10,
+            isActive: false,
             successId: 5,
         },
     });
@@ -390,6 +395,7 @@ async function main() {
             category: "Apprentissage",
             difficulty: 3,
             xp: 40,
+            isActive: false,
             successId: 6,
         },
     });
@@ -403,6 +409,7 @@ async function main() {
             category: "Sport",
             difficulty: 4,
             xp: 60,
+            isActive: false,
             successId: 7,
         },
     });
@@ -416,6 +423,7 @@ async function main() {
             category: "Besoins vitaux",
             difficulty: 1,
             xp: 10,
+            isActive: false,
             successId: 8,
         },
     });
@@ -429,6 +437,7 @@ async function main() {
             image: "/assets/tasks/2.svg",
             difficulty: 3,
             xp: 40,
+            isActive: false,
         },
     });
 
@@ -441,6 +450,7 @@ async function main() {
             category: "Relaxation",
             difficulty: 2,
             xp: 20,
+            isActive: false,
             successId: 9,
         },
     });
@@ -454,6 +464,7 @@ async function main() {
             category: "Corvée",
             difficulty: 4,
             xp: 60,
+            isActive: false,
             successId: 10,
         },
     });
@@ -469,6 +480,7 @@ async function main() {
             category: "Relaxation",
             difficulty: 3,
             xp: 40,
+            isActive: false,
             successId: 11,
         },
     });
@@ -484,6 +496,7 @@ async function main() {
             category: "Relaxation",
             difficulty: 4,
             xp: 60,
+            isActive: false,
             successId: 12,
         },
     });
@@ -499,6 +512,7 @@ async function main() {
             category: "Relaxation",
             difficulty: 1,
             xp: 10,
+            isActive: false,
             successId: 13,
         },
     });
