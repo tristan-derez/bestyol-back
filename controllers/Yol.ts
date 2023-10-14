@@ -85,14 +85,14 @@ export const getOneYolByUserId = async (req: Request, res: Response) => {
     const xpToReachLevelTen = 2700;
     const xpToReachLevelTwenty = 10450;
 
-    if (!userId || isNaN(userId)) {
-        throw Object.assign(new Error(), {
-            status: 400,
-            message: "userId est absent de la requête ou n'est pas un nombre valide",
-        });
-    }
-
     try {
+        if (!userId || isNaN(userId)) {
+            throw Object.assign(new Error(), {
+                status: 400,
+                message: "userId est absent de la requête ou n'est pas un nombre valide",
+            });
+        }
+
         const yol = await prisma.yol.findMany({
             where: {
                 userId: userId,
