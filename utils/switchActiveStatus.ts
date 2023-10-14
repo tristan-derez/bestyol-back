@@ -34,6 +34,7 @@ export async function newActiveDaily(count: number) {
                 lastAssignDate: startOfToday,
             },
         });
+        console.log("daily tasks created");
     } catch (error) {
         console.error("There was an error generating active daily tasks: ", error);
     }
