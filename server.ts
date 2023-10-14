@@ -12,6 +12,7 @@ const server = http.createServer(app);
 
 // call newActiveDaily everyday at 11:30pm
 cron.schedule("05 22 * * *", () => {
+    console.log(`creating daily tasks.........`);
     newActiveDaily(6);
 });
 
