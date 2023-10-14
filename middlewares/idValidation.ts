@@ -20,6 +20,6 @@ export default (req: AuthenticatedRequest, res: Response, next: NextFunction) =>
 
         next();
     } catch (error) {
-        res.status(401).json({ message: "Accès non autorisé" });
+        res.status(500).json({ message: "Erreur interne" });
     }
 };
