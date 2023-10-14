@@ -185,14 +185,14 @@ export const getOneYolByUserId = async (req: Request, res: Response) => {
 export const evolve = async (req: Request, res: Response) => {
     const yolId: number = Number(req.params.yolId);
 
-    if (!yolId || isNaN(yolId)) {
-        throw Object.assign(new Error(), {
-            status: 400,
-            message: "yolId est absent de la requête ou n'est pas un nombre valide",
-        });
-    }
-
     try {
+        if (!yolId || isNaN(yolId)) {
+            throw Object.assign(new Error(), {
+                status: 400,
+                message: "yolId est absent de la requête ou n'est pas un nombre valide",
+            });
+        }
+
         const yolInfo = await prisma.yol.findFirst({
             where: {
                 id: yolId,
