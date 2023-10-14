@@ -80,15 +80,22 @@ export const createUserDailyTasks = async (req: AuthenticatedRequest, res: Respo
             return res.status(200).json({ existingDailyTasks });
         }
 
+        const dailyGenerated = await prisma.dailyTasks.findFirst({
+            where: {
+                isActive: true,
+                lastAssignDate: startOfToday,
+            },
+        });
+
+        if (!dailyGenerated) {
+            await newActiveDaily(6);
+        }
+
         const tasks: DailyTasks[] = await prisma.dailyTasks.findMany({
             where: {
                 isActive: true,
             },
         });
-
-        if (!tasks) {
-            newActiveDaily(6);
-        }
 
         const userTasks: UserTasks[] = [];
 
