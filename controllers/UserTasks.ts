@@ -65,7 +65,7 @@ export const createUserDailyTasks = async (req: AuthenticatedRequest, res: Respo
             });
         }
 
-        const existingDailyTasks = await prisma.userTasks.findFirst({
+        const existingDailyTasks = await prisma.userTasks.findMany({
             where: {
                 userId: userId,
                 isDaily: true,
@@ -76,8 +76,8 @@ export const createUserDailyTasks = async (req: AuthenticatedRequest, res: Respo
             },
         });
 
-        if (existingDailyTasks) {
-            return res.status(200).json({ existingDailyTasks });
+        if (existingDailyTasks.length > 1) {
+            return res.status(200).json({ dailyTasks: existingDailyTasks });
         }
 
         const dailyGenerated = await prisma.dailyTasks.findFirst({
@@ -117,7 +117,7 @@ export const createUserDailyTasks = async (req: AuthenticatedRequest, res: Respo
             userTasks.push(userTask);
         }
 
-        res.status(200).json({ userTasks });
+        res.status(200).json({ dailyTasks: userTasks });
     } catch (error: any) {
         res.status(error.status || 500).json({ message: error.message || "Erreur lors de l'assignation des tâches quotidiennes à l'utilisateur" });
     }
