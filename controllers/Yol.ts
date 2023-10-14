@@ -7,28 +7,28 @@ import { incrementEvolveSuccess } from "../utils/incrementEvolveSuccess";
 export const createYol = async (req: Request, res: Response) => {
     const { name, userId, speciesId }: { name: string; userId: number; speciesId: number } = req.body;
 
-    // we prevent user from selecting
-    // something else than every species as egg
-    if (![1, 5, 9].includes(speciesId)) {
-        throw Object.assign(new Error(), {
-            status: 400,
-            message: "speciesId must be 1, 5, or 9",
-        });
-    }
-
-    if (!name || !userId || !speciesId) {
-        throw Object.assign(new Error(), {
-            status: 400,
-            exemple: {
-                name: "Pika",
-                userId: 327,
-                speciesId: 1,
-            },
-            message: "Certains champs requis sont absents du corps de la requête",
-        });
-    }
-
     try {
+        // we prevent user from selecting
+        // something else than every species as egg
+        if (![1, 5, 9].includes(speciesId)) {
+            throw Object.assign(new Error(), {
+                status: 400,
+                message: "speciesId must be 1, 5, or 9",
+            });
+        }
+
+        if (!name || !userId || !speciesId) {
+            throw Object.assign(new Error(), {
+                status: 400,
+                exemple: {
+                    name: "Pika",
+                    userId: 327,
+                    speciesId: 1,
+                },
+                message: "Certains champs requis sont absents du corps de la requête",
+            });
+        }
+
         const yol = await prisma.yol.create({
             data: {
                 name: req.body.name,
@@ -54,14 +54,14 @@ export const createYol = async (req: Request, res: Response) => {
 export const getOneYol = async (req: Request, res: Response) => {
     const yolId: number = Number(req.params.yolId);
 
-    if (!yolId || isNaN(yolId)) {
-        throw Object.assign(new Error(), {
-            status: 400,
-            message: "yolId est absent de la requête ou n'est pas un nombre valide",
-        });
-    }
-
     try {
+        if (!yolId || isNaN(yolId)) {
+            throw Object.assign(new Error(), {
+                status: 400,
+                message: "yolId est absent de la requête ou n'est pas un nombre valide",
+            });
+        }
+
         const yol = await prisma.yol.findUnique({
             where: {
                 id: yolId,
