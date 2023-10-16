@@ -6,8 +6,6 @@ import { AuthenticatedRequest } from "../middlewares/idValidation";
 
 import { prisma } from "../utils/prismaClient";
 import { generateAccessToken } from "../utils/auth/generateAccessToken";
-import { createUserSuccess } from "../utils/createUserSuccess";
-import { error } from "console";
 
 //* POST
 export const signup = async (req: Request, res: Response) => {
