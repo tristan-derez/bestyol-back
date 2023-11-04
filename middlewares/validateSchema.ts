@@ -19,7 +19,7 @@ export const validateSchema = (schema: any) => (req: Request, res: Response, nex
                 });
             }
 
-            return res.status(400).json({ errors });
+            return res.status(400).json({ erreurs: errors });
         }
     }
 };
