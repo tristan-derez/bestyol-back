@@ -6,43 +6,78 @@ import { AuthenticatedRequest } from "../middlewares/idValidation";
 
 import { prisma } from "../utils/prismaClient";
 import { generateAccessToken } from "../utils/auth/generateAccessToken";
-import { createUserSuccess } from "../utils/createUserSuccess";
 
 //* POST
 export const signup = async (req: Request, res: Response) => {
-    const { username, email, password } = req.body;
+    const { username, email, password }: { username: string; email: string; password: string } = req.body;
 
     // we store username as lowercase to prevent mismatches
     const normalizedUsername: string = username.toLowerCase();
+    const normalizedEmail: string = email.toLocaleLowerCase();
 
     try {
-        // check if the username or email already exist
-        const existingUser = await prisma.users.findFirst({
-            where: {
-                OR: [{ username: normalizedUsername }, { email: email }],
-            },
-        });
+        // we check if username or email already exist in db
+        const [existingUsername, existingEmail] = await prisma.$transaction([
+            prisma.users.findFirst({
+                where: { username: normalizedUsername },
+            }),
+            prisma.users.findFirst({
+                where: { email },
+            }),
+        ]);
 
-        // 409 is status code for conflict which is the right status code
-        // when you're trying to add a resource
-        if (existingUser) {
+        // both are already used
+        // 409 is status code for conflict which is status code
+        // when you're trying to add a resource that already exist
+        if (existingUsername && existingEmail) {
+            const errorMessage = `Le nom d'utilisateur et l'email ne sont pas disponibles`;
             throw Object.assign(new Error(), {
                 status: 409,
-                message:
-                    existingUser.username === normalizedUsername
-                        ? "Le nom d'utilisateur n'est pas disponible"
-                        : "L'email renseigné n'est pas disponible",
+                message: errorMessage,
+            });
+        }
+
+        if (existingUsername || existingEmail) {
+            const errorMessage = existingUsername ? "Le nom d'utilisateur n'est pas disponible" : "L'email n'est pas disponible";
+            throw Object.assign(new Error(), {
+                status: 409,
+                message: errorMessage,
             });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
+        // to generate a random number that will be used to pick a random profil picture
+        const randomNumber = Math.floor(Math.random() * (48 - 1 + 1)) + 1;
 
-        const user = await prisma.users.create({
-            data: {
+        // create an user and all its userSuccess
+        await prisma.$transaction(async (prisma) => {
+            const user = await prisma.users.create({
+                data: {
+                    username: normalizedUsername,
+                    email: normalizedEmail,
+                    password: hashedPassword,
+                    pp: `/assets/avatars/Icon${randomNumber}.png`,
+                },
+            });
+
+            const allSuccess = await prisma.success.findMany();
+
+            for (const success of allSuccess) {
+                await prisma.userSuccess.create({
+                    data: {
+                        actualAmount: 0,
+                        isCompleted: false,
+                        userId: user.id,
+                        successId: success.id,
+                    },
+                });
+            }
+        });
+
+        // get the newly created user without the password field
+        const createdUser = await prisma.users.findUnique({
+            where: {
                 username: normalizedUsername,
-                email,
-                password: hashedPassword,
-                pp: "/assets/avatars/Icon1.png",
             },
             select: {
                 id: true,
@@ -54,12 +89,20 @@ export const signup = async (req: Request, res: Response) => {
             },
         });
 
-        await createUserSuccess(user.id);
+        // throw an error if the created user cannot be found
+        if (!createdUser) {
+            console.error("cant find created user");
+            throw Object.assign(new Error(), {
+                status: 500,
+                message: "Erreur interne",
+            });
+        }
 
-        const accessToken = await generateAccessToken(user.id);
+        // generate access token
+        const accessToken = await generateAccessToken(createdUser.id);
 
         return res.status(201).json({
-            user,
+            user: createdUser,
             accessToken: accessToken,
         });
     } catch (error: any) {

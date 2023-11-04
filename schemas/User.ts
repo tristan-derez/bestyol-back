@@ -7,7 +7,7 @@ const usernameMaxError: string = `Le nom d'utilisateur ne doit pas dépasser ${u
 
 const emailError: string = "L'email doit avoir un format valide";
 
-const passwordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{8,}$/;
+const passwordRegex = /^(?=.*[0-9])(?=.*[!-/:-@\[-{-~_])[a-zA-Z0-9!@#$%^&*_\-+=<>?/]{8,}$/;
 const passwordError = "Le mot de passe doit contenir au minimum 8 caractères, un nombre et un caractère spécial";
 
 export const SignUpSchema = z.object({
