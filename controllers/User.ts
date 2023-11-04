@@ -4,7 +4,7 @@ import jwt, { JwtPayload } from "jsonwebtoken";
 
 import { AuthenticatedRequest } from "../middlewares/idValidation";
 
-import { prisma } from "../utils/prismaClient";
+import { Users, prisma } from "../utils/prismaClient";
 import { generateAccessToken } from "../utils/auth/generateAccessToken";
 
 //* POST
@@ -13,22 +13,13 @@ export const signup = async (req: Request, res: Response) => {
 
     // we store username as lowercase to prevent mismatches
     const normalizedUsername: string = username.toLowerCase();
-    const normalizedEmail: string = email.toLocaleLowerCase();
+    const normalizedEmail: string = email.toLowerCase();
 
     try {
-        // we check if username or email already exist in db
-        const [existingUsername, existingEmail] = await prisma.$transaction([
-            prisma.users.findFirst({
-                where: { username: normalizedUsername },
-            }),
-            prisma.users.findFirst({
-                where: { email },
-            }),
-        ]);
+        // first, check if username or email already exist
+        const existingUsername = await prisma.users.findUnique({ where: { username: normalizedUsername }, select: { username: true } });
+        const existingEmail = await prisma.users.findUnique({ where: { email: normalizedEmail }, select: { email: true } });
 
-        // both are already used
-        // 409 is status code for conflict which is status code
-        // when you're trying to add a resource that already exist
         if (existingUsername && existingEmail) {
             const errorMessage = `Le nom d'utilisateur et l'email ne sont pas disponibles`;
             throw Object.assign(new Error(), {
@@ -89,16 +80,13 @@ export const signup = async (req: Request, res: Response) => {
             },
         });
 
-        // throw an error if the created user cannot be found
         if (!createdUser) {
-            console.error("cant find created user");
             throw Object.assign(new Error(), {
                 status: 500,
                 message: "Erreur interne",
             });
         }
 
-        // generate access token
         const accessToken = await generateAccessToken(createdUser.id);
 
         return res.status(201).json({
@@ -123,14 +111,16 @@ export const login = async (req: Request, res: Response) => {
             });
         }
 
-        const user = await prisma.users.findUnique({
+        const user: Users | null = await prisma.users.findUnique({
             where: { username: normalizedUsername },
             select: {
                 id: true,
                 username: true,
                 email: true,
                 pp: true,
+                banner: true,
                 createdAt: true,
+                updatedAt: true,
                 password: true,
             },
         });
@@ -143,7 +133,7 @@ export const login = async (req: Request, res: Response) => {
             });
         }
 
-        const accessToken = await generateAccessToken(user.id);
+        const accessToken: string = await generateAccessToken(user.id);
 
         // we destruct user object to create another one
         // without the password field
