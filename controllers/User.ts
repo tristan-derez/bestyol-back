@@ -149,9 +149,10 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
 };
 
 export const refreshAccessToken = async (req: Request, res: Response, next: NextFunction) => {
-    const token = req.headers.authorization?.split(" ")[1];
-
     try {
+        if (!req.headers.authorization) throw new Error("Authorization absent des headers");
+        const token = req.headers.authorization.split(" ")[1];
+
         if (!token) {
             throw Object.assign(new Error(), {
                 status: 401,
@@ -181,17 +182,10 @@ export const refreshAccessToken = async (req: Request, res: Response, next: Next
 };
 
 //* GET
-export const getUser = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const getUserById = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     const userId: number = Number(req.params.userId);
 
     try {
-        if (!userId || isNaN(userId)) {
-            throw Object.assign(new Error(), {
-                status: 400,
-                message: "Le paramètre userId est absent de la requête ou n'est pas un nombre valide",
-            });
-        }
-
         const user = await prisma.users.findUnique({
             where: { id: userId },
             select: { id: true, pp: true, banner: true, email: true, username: true, createdAt: true },
@@ -325,14 +319,7 @@ export const editPicture = async (req: Request, res: Response, next: NextFunctio
     const pictureNumber: number = req.body.pictureNumber;
 
     try {
-        if (pictureNumber < 1 || pictureNumber > 48) {
-            throw Object.assign(new Error(), {
-                status: 404,
-                message: "Image introuvable",
-            });
-        }
-
-        const newPicture = `/assets/avatars/Icon${req.body.pictureNumber}.png`;
+        const newPicture = `/assets/avatars/Icon${pictureNumber}.png`;
 
         const updatedUser = await prisma.users.update({
             where: {
@@ -417,7 +404,7 @@ export default {
     signup,
     login,
     refreshAccessToken,
-    getUser,
+    getUserById,
     editUsernameOrEmail,
     editPassword,
     editPicture,
