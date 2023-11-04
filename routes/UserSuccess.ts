@@ -5,11 +5,17 @@ const router: Router = express.Router();
 
 import userSuccessController from "../controllers/UserSuccess";
 import idValidation from "../middlewares/idValidation";
+import validateSchema from "../middlewares/validateSchema";
+import { GetAllUserSuccessByUserIdSchema, ValidateUserSuccessSchema } from "../schemas/UserSuccess";
 
 //* GET
-router.get("/:userId", [verifyAuthToken, idValidation], userSuccessController.getAllUserSuccessByUserId);
+router.get(
+    "/:userId",
+    [validateSchema(GetAllUserSuccessByUserIdSchema), verifyAuthToken, idValidation],
+    userSuccessController.getAllUserSuccessByUserId
+);
 
 //* PATCH
-router.patch("/validate/:id", verifyAuthToken, userSuccessController.validateSuccess);
+router.patch("/validate/:id", [validateSchema(ValidateUserSuccessSchema), verifyAuthToken], userSuccessController.validateSuccess);
 
 export default router;
