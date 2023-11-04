@@ -6,6 +6,8 @@ export const validateSchema = (schema: any) => (req: Request, res: Response, nex
 
     try {
         schema.parse({
+            headers: req.headers,
+            params: req.params,
             body: req.body,
         });
 
