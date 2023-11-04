@@ -1,5 +1,5 @@
 import express, { Router } from "express";
-import authToken from "../middlewares/verifyAuthToken";
+import { verifyAuthToken } from "../middlewares/verifyAuthToken";
 import idValidation from "../middlewares/idValidation";
 import validateSchema from "../middlewares/validateSchema";
 
@@ -22,14 +22,18 @@ router.post("/login", validateSchema(LoginSchema), userController.login);
 router.post("/refreshTokens", userController.refreshAccessToken);
 
 //* GET
-router.get("/:userId", [validateSchema(GetUserSchema), authToken, idValidation], userController.getUser);
+router.get("/:userId", [validateSchema(GetUserSchema), verifyAuthToken, idValidation], userController.getUser);
 
 //* PATCH
-router.patch("/edit/username_email/:userId", [validateSchema(EditUsernameEmailSchema), authToken, idValidation], userController.editUsernameOrEmail);
-router.patch("/edit/password/:userId", [validateSchema(EditUserPasswordSchema), authToken, idValidation], userController.editPassword);
-router.patch("/edit/picture/:userId", [validateSchema(EditUserPictureSchema), authToken, idValidation], userController.editPicture);
+router.patch(
+    "/edit/username_email/:userId",
+    [validateSchema(EditUsernameEmailSchema), verifyAuthToken, idValidation],
+    userController.editUsernameOrEmail
+);
+router.patch("/edit/password/:userId", [validateSchema(EditUserPasswordSchema), verifyAuthToken, idValidation], userController.editPassword);
+router.patch("/edit/picture/:userId", [validateSchema(EditUserPictureSchema), verifyAuthToken, idValidation], userController.editPicture);
 
 //* DELETE
-router.delete("/delete/:userId", [validateSchema(DeleteUserSchema), authToken, idValidation], userController.deleteUser);
+router.delete("/delete/:userId", [validateSchema(DeleteUserSchema), verifyAuthToken, idValidation], userController.deleteUser);
 
 export default router;
