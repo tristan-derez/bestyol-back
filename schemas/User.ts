@@ -26,7 +26,7 @@ export const LoginSchema = z.object({
     }),
 });
 
-export const GetUserSchema = z.object({
+export const GetUserByIdSchema = z.object({
     params: z.object({
         userId: z.string().refine(
             (value) => {

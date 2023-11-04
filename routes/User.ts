@@ -13,7 +13,7 @@ import {
     EditUserPasswordSchema,
     EditUserPictureSchema,
     DeleteUserSchema,
-    GetUserSchema,
+    GetUserByIdSchema,
 } from "../schemas/User";
 
 //* POST
@@ -22,7 +22,7 @@ router.post("/login", validateSchema(LoginSchema), userController.login);
 router.post("/refreshTokens", userController.refreshAccessToken);
 
 //* GET
-router.get("/:userId", [validateSchema(GetUserSchema), verifyAuthToken, idValidation], userController.getUser);
+router.get("/:userId", [validateSchema(GetUserByIdSchema), verifyAuthToken, idValidation], userController.getUserById);
 
 //* PATCH
 router.patch(
