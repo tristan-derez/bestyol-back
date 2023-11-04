@@ -1,55 +1,55 @@
+import { error } from "console";
 import { prisma } from "../services/prismaClient";
 
 export async function incrementEvolveSuccess(userId: number, formerStage: string) {
     const errorSuccess = "Erreur au moment d'incrémenter le succès utilisateur : succès correspondant à l'évolution introuvable";
     const errorUserSuccess = "Erreur au moment d'incrémenter le succès utilisateur : succès utilisateur correspondant à l'évolution introuvable";
-    const errorAmount = "Erreur au moment d'incrémenter le succès utilisateur : actualAmount ou amountNeeded undefined";
 
     switch (formerStage) {
         case "Egg":
+            // search corresponding success in success table to get the id
             const matchingEggEvolutionSuccess = await prisma.success.findFirst({
                 where: {
                     title: "Sorti de l'oeuf",
                 },
-            });
-
-            if (matchingEggEvolutionSuccess === null) {
-                throw Object.assign(new Error(), {
-                    message: errorSuccess,
-                });
-            }
-
-            const matchingEggEvolutionUserSuccess = await prisma.userSuccess.findFirst({
-                where: {
-                    successId: matchingEggEvolutionSuccess?.id,
-                    userId: userId,
+                select: {
+                    id: true,
+                    amountNeeded: true,
                 },
             });
 
-            if (matchingEggEvolutionUserSuccess === null) {
-                throw Object.assign(new Error(), {
-                    message: errorUserSuccess,
+            // throw if not found, but is unlikely
+            if (!matchingEggEvolutionSuccess) throw new Error(errorSuccess);
+
+            // we check if user got the success
+            const matchingEggEvolutionUserSuccess = await prisma.userSuccess.findFirst({
+                where: {
+                    successId: matchingEggEvolutionSuccess.id,
+                    userId: userId,
+                },
+                select: {
+                    actualAmount: true,
+                    id: true,
+                },
+            });
+
+            // throw if not found
+            if (!matchingEggEvolutionUserSuccess) throw new Error(errorUserSuccess);
+
+            // increment userSuccess by one if found and the actualAmount is less than amoundNeeded
+            if (matchingEggEvolutionUserSuccess.actualAmount < matchingEggEvolutionSuccess.amountNeeded) {
+                await prisma.userSuccess.update({
+                    where: {
+                        id: matchingEggEvolutionUserSuccess.id,
+                    },
+                    data: {
+                        actualAmount: {
+                            increment: 1,
+                        },
+                    },
                 });
             }
 
-            if (matchingEggEvolutionUserSuccess?.actualAmount !== undefined && matchingEggEvolutionSuccess?.amountNeeded !== undefined) {
-                if (matchingEggEvolutionUserSuccess.actualAmount < matchingEggEvolutionSuccess.amountNeeded) {
-                    await prisma.userSuccess.update({
-                        where: {
-                            id: matchingEggEvolutionUserSuccess?.id,
-                        },
-                        data: {
-                            actualAmount: {
-                                increment: 1,
-                            },
-                        },
-                    });
-                }
-            } else {
-                throw Object.assign(new Error(), {
-                    message: errorAmount,
-                });
-            }
             break;
 
         case "Baby":
@@ -57,45 +57,40 @@ export async function incrementEvolveSuccess(userId: number, formerStage: string
                 where: {
                     title: "Mini Yol",
                 },
-            });
-
-            if (matchingBabyEvolutionSuccess === null) {
-                throw Object.assign(new Error(), {
-                    message: errorSuccess,
-                });
-            }
-
-            const matchingBabyEvolutionUserSuccess = await prisma.userSuccess.findFirst({
-                where: {
-                    successId: matchingBabyEvolutionSuccess?.id,
-                    userId: userId,
+                select: {
+                    id: true,
+                    amountNeeded: true,
                 },
             });
 
-            if (matchingBabyEvolutionUserSuccess === null) {
-                throw Object.assign(new Error(), {
-                    message: errorUserSuccess,
+            if (!matchingBabyEvolutionSuccess) throw new Error(errorSuccess);
+
+            const matchingBabyEvolutionUserSuccess = await prisma.userSuccess.findFirst({
+                where: {
+                    successId: matchingBabyEvolutionSuccess.id,
+                    userId: userId,
+                },
+                select: {
+                    actualAmount: true,
+                    id: true,
+                },
+            });
+
+            if (!matchingBabyEvolutionUserSuccess) throw new Error(errorUserSuccess);
+
+            if (matchingBabyEvolutionUserSuccess.actualAmount < matchingBabyEvolutionSuccess.amountNeeded) {
+                await prisma.userSuccess.update({
+                    where: {
+                        id: matchingBabyEvolutionUserSuccess.id,
+                    },
+                    data: {
+                        actualAmount: {
+                            increment: 1,
+                        },
+                    },
                 });
             }
 
-            if (matchingBabyEvolutionUserSuccess?.actualAmount !== undefined && matchingBabyEvolutionSuccess?.amountNeeded !== undefined) {
-                if (matchingBabyEvolutionUserSuccess.actualAmount < matchingBabyEvolutionSuccess.amountNeeded) {
-                    await prisma.userSuccess.update({
-                        where: {
-                            id: matchingBabyEvolutionUserSuccess?.id,
-                        },
-                        data: {
-                            actualAmount: {
-                                increment: 1,
-                            },
-                        },
-                    });
-                }
-            } else {
-                throw Object.assign(new Error(), {
-                    message: errorAmount,
-                });
-            }
             break;
 
         case "Adolescent":
@@ -103,45 +98,40 @@ export async function incrementEvolveSuccess(userId: number, formerStage: string
                 where: {
                     title: "Grand Yol",
                 },
-            });
-
-            if (matchingAdoEvolutionSuccess === null) {
-                throw Object.assign(new Error(), {
-                    message: errorSuccess,
-                });
-            }
-
-            const matchingAdoEvolutionUserSuccess = await prisma.userSuccess.findFirst({
-                where: {
-                    successId: matchingAdoEvolutionSuccess?.id,
-                    userId: userId,
+                select: {
+                    id: true,
+                    amountNeeded: true,
                 },
             });
 
-            if (matchingAdoEvolutionUserSuccess === null) {
-                throw Object.assign(new Error(), {
-                    message: errorUserSuccess,
+            if (!matchingAdoEvolutionSuccess) throw new Error(errorSuccess);
+
+            const matchingAdoEvolutionUserSuccess = await prisma.userSuccess.findFirst({
+                where: {
+                    successId: matchingAdoEvolutionSuccess.id,
+                    userId: userId,
+                },
+                select: {
+                    actualAmount: true,
+                    id: true,
+                },
+            });
+
+            if (!matchingAdoEvolutionUserSuccess) throw new Error(errorUserSuccess);
+
+            if (matchingAdoEvolutionUserSuccess.actualAmount < matchingAdoEvolutionSuccess.amountNeeded) {
+                await prisma.userSuccess.update({
+                    where: {
+                        id: matchingAdoEvolutionUserSuccess.id,
+                    },
+                    data: {
+                        actualAmount: {
+                            increment: 1,
+                        },
+                    },
                 });
             }
 
-            if (matchingAdoEvolutionUserSuccess?.actualAmount !== undefined && matchingAdoEvolutionSuccess?.amountNeeded !== undefined) {
-                if (matchingAdoEvolutionUserSuccess.actualAmount < matchingAdoEvolutionSuccess.amountNeeded) {
-                    await prisma.userSuccess.update({
-                        where: {
-                            id: matchingAdoEvolutionUserSuccess?.id,
-                        },
-                        data: {
-                            actualAmount: {
-                                increment: 1,
-                            },
-                        },
-                    });
-                }
-            } else {
-                throw Object.assign(new Error(), {
-                    message: errorAmount,
-                });
-            }
             break;
         default:
             return;
