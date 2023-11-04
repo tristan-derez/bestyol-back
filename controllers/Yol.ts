@@ -3,6 +3,7 @@ import { prisma } from "../utils/prismaClient";
 
 import { incrementEvolveSuccess } from "../utils/incrementEvolveSuccess";
 import { AuthenticatedRequest } from "../middlewares/idValidation";
+import { checkYolXpToValidateSuccess } from "../utils/checkYolXpToValidateSuccess";
 
 //* POST
 export const createYol = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
@@ -47,11 +48,8 @@ export const getOneYol = async (req: Request, res: Response, next: NextFunction)
     }
 };
 
-export const getOneYolByUserId = async (req: Request, res: Response, next: NextFunction) => {
+export const getOneYolByUserId = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     const userId: number = Number(req.params.userId);
-    const xpToReachLevelThree = 250;
-    const xpToReachLevelTen = 2700;
-    const xpToReachLevelTwenty = 10450;
 
     try {
         const yol = await prisma.yol.findMany({
@@ -67,74 +65,9 @@ export const getOneYolByUserId = async (req: Request, res: Response, next: NextF
             return res.status(200).json({ message: "Cet utilisateur ne possède pas de Yol" });
         }
 
-        if (yol[0].xp >= xpToReachLevelThree) {
-            const yolLevelThreeUserSuccess = await prisma.userSuccess.findFirst({
-                where: {
-                    userId: userId,
-                    successId: 17,
-                },
-            });
-
-            if (yolLevelThreeUserSuccess && !yolLevelThreeUserSuccess.isCompleted) {
-                await prisma.userSuccess.update({
-                    where: {
-                        id: yolLevelThreeUserSuccess.id,
-                    },
-                    data: {
-                        actualAmount: {
-                            increment: 1,
-                        },
-                        isCompleted: true,
-                    },
-                });
-            }
-        }
-
-        if (yol[0].xp >= xpToReachLevelTen) {
-            const yolLevelTenUserSuccess = await prisma.userSuccess.findFirst({
-                where: {
-                    userId: userId,
-                    successId: 18,
-                },
-            });
-
-            if (yolLevelTenUserSuccess && !yolLevelTenUserSuccess.isCompleted) {
-                await prisma.userSuccess.update({
-                    where: {
-                        id: yolLevelTenUserSuccess.id,
-                    },
-                    data: {
-                        actualAmount: {
-                            increment: 1,
-                        },
-                        isCompleted: true,
-                    },
-                });
-            }
-        }
-
-        if (yol[0].xp >= xpToReachLevelTwenty) {
-            const yolLevelTwentyUserSuccess = await prisma.userSuccess.findFirst({
-                where: {
-                    userId: userId,
-                    successId: 19,
-                },
-            });
-
-            if (yolLevelTwentyUserSuccess && !yolLevelTwentyUserSuccess.isCompleted) {
-                await prisma.userSuccess.update({
-                    where: {
-                        id: yolLevelTwentyUserSuccess.id,
-                    },
-                    data: {
-                        actualAmount: {
-                            increment: 1,
-                        },
-                        isCompleted: true,
-                    },
-                });
-            }
-        }
+        // we check if the Yol has enough XP to validate success
+        // associated to it
+        checkYolXpToValidateSuccess(userId, yol);
 
         return res.status(200).json(yol[0]);
     } catch (error: any) {
