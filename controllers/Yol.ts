@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { prisma } from "../utils/prismaClient";
+import { prisma } from "../services/prismaClient";
 
 import { AuthenticatedRequest } from "../middlewares/idValidation";
 import { checkYolXpToValidateSuccess } from "../utils/checkYolXpToValidateSuccess";
@@ -92,11 +92,13 @@ export const evolveYol = async (req: Request, res: Response, next: NextFunction)
         if (!yolInfo) {
             throw Object.assign(new Error(), {
                 status: 404,
-                message: "Le Yol est introuvable",
+                message: "Yol introuvable",
             });
         }
 
-        await switchYolStage(yolId, yolInfo);
+        const evolutionResult = (await switchYolStage(yolId, yolInfo)) as { message: string; newSpecies: any };
+
+        res.status(200).json({ message: evolutionResult?.message, newSpecies: evolutionResult?.newSpecies });
     } catch (error: any) {
         next(error);
     }
