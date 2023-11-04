@@ -16,6 +16,6 @@ router.get(
 );
 
 //* PATCH
-router.patch("/validate/:id", [validateSchema(ValidateUserSuccessSchema), verifyAuthToken], userSuccessController.validateSuccess);
+router.patch("/validate/:userSuccessId", [validateSchema(ValidateUserSuccessSchema), verifyAuthToken], userSuccessController.validateSuccess);
 
 export default router;

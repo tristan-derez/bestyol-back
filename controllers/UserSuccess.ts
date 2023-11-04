@@ -31,7 +31,7 @@ export const getAllUserSuccessByUserId = async (req: Request, res: Response, nex
 
 //* PATCH
 export const validateSuccess = async (req: Request, res: Response, next: NextFunction) => {
-    const userSuccessId: number = Number(req.params.id);
+    const userSuccessId: number = Number(req.params.userSuccessId);
     const yolId: number = Number(req.body.yolId);
 
     try {

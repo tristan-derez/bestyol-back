@@ -17,14 +17,14 @@ export const GetAllUserSuccessByUserIdSchema = z.object({
 
 export const ValidateUserSuccessSchema = z.object({
     params: z.object({
-        userId: z.string().refine(
+        userSuccessId: z.string().refine(
             (value) => {
                 const parsedValue = parseInt(value, 10);
                 return !isNaN(parsedValue) && isFinite(parsedValue);
             },
             {
-                message: "Le paramètre userId doit être un nombre valide",
-                path: ["userId"],
+                message: "Le paramètre userSuccessId doit être un nombre valide",
+                path: ["userSuccessId"],
             }
         ),
     }),
