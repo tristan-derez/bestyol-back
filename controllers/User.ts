@@ -1,34 +1,25 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import jwt, { JwtPayload } from "jsonwebtoken";
 
 import { AuthenticatedRequest } from "../middlewares/idValidation";
 
-import { prisma } from "../utils/prismaClient";
+import { Users, prisma } from "../services/prismaClient";
 import { generateAccessToken } from "../utils/auth/generateAccessToken";
 
 //* POST
-export const signup = async (req: Request, res: Response) => {
+export const signup = async (req: Request, res: Response, next: NextFunction) => {
     const { username, email, password }: { username: string; email: string; password: string } = req.body;
 
     // we store username as lowercase to prevent mismatches
     const normalizedUsername: string = username.toLowerCase();
-    const normalizedEmail: string = email.toLocaleLowerCase();
+    const normalizedEmail: string = email.toLowerCase();
 
     try {
-        // we check if username or email already exist in db
-        const [existingUsername, existingEmail] = await prisma.$transaction([
-            prisma.users.findFirst({
-                where: { username: normalizedUsername },
-            }),
-            prisma.users.findFirst({
-                where: { email },
-            }),
-        ]);
+        // first, check if username or email already exist
+        const existingUsername = await prisma.users.findUnique({ where: { username: normalizedUsername }, select: { username: true } });
+        const existingEmail = await prisma.users.findUnique({ where: { email: normalizedEmail }, select: { email: true } });
 
-        // both are already used
-        // 409 is status code for conflict which is status code
-        // when you're trying to add a resource that already exist
         if (existingUsername && existingEmail) {
             const errorMessage = `Le nom d'utilisateur et l'email ne sont pas disponibles`;
             throw Object.assign(new Error(), {
@@ -89,16 +80,13 @@ export const signup = async (req: Request, res: Response) => {
             },
         });
 
-        // throw an error if the created user cannot be found
         if (!createdUser) {
-            console.error("cant find created user");
             throw Object.assign(new Error(), {
                 status: 500,
                 message: "Erreur interne",
             });
         }
 
-        // generate access token
         const accessToken = await generateAccessToken(createdUser.id);
 
         return res.status(201).json({
@@ -106,11 +94,11 @@ export const signup = async (req: Request, res: Response) => {
             accessToken: accessToken,
         });
     } catch (error: any) {
-        return res.status(error.status || 500).json({ message: error.message || "Erreur interne" });
+        next(error);
     }
 };
 
-export const login = async (req: Request, res: Response) => {
+export const login = async (req: Request, res: Response, next: NextFunction) => {
     const { username, password }: { username: string; password: string } = req.body;
 
     const normalizedUsername: string = username.toLowerCase();
@@ -123,14 +111,16 @@ export const login = async (req: Request, res: Response) => {
             });
         }
 
-        const user = await prisma.users.findUnique({
+        const user: Users | null = await prisma.users.findUnique({
             where: { username: normalizedUsername },
             select: {
                 id: true,
                 username: true,
                 email: true,
                 pp: true,
+                banner: true,
                 createdAt: true,
+                updatedAt: true,
                 password: true,
             },
         });
@@ -143,7 +133,7 @@ export const login = async (req: Request, res: Response) => {
             });
         }
 
-        const accessToken = await generateAccessToken(user.id);
+        const accessToken: string = await generateAccessToken(user.id);
 
         // we destruct user object to create another one
         // without the password field
@@ -154,14 +144,15 @@ export const login = async (req: Request, res: Response) => {
             accessToken: accessToken,
         });
     } catch (error: any) {
-        return res.status(error.status || 500).json({ message: error.message || "Erreur interne" });
+        next(error);
     }
 };
 
-export const refreshAccessToken = async (req: Request, res: Response) => {
-    const token = req.headers.authorization?.split(" ")[1];
-
+export const refreshAccessToken = async (req: Request, res: Response, next: NextFunction) => {
     try {
+        if (!req.headers.authorization) throw new Error("Authorization absent des headers");
+        const token = req.headers.authorization.split(" ")[1];
+
         if (!token) {
             throw Object.assign(new Error(), {
                 status: 401,
@@ -186,22 +177,15 @@ export const refreshAccessToken = async (req: Request, res: Response) => {
 
         res.status(200).send({ accessToken: refreshedToken });
     } catch (error: any) {
-        return res.status(error.status || 500).json({ message: error.message || "Erreur interne" });
+        next(error);
     }
 };
 
 //* GET
-export const getUser = async (req: AuthenticatedRequest, res: Response) => {
+export const getUserById = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     const userId: number = Number(req.params.userId);
 
     try {
-        if (!userId || isNaN(userId)) {
-            throw Object.assign(new Error(), {
-                status: 400,
-                message: "Le paramètre userId est absent de la requête ou n'est pas un nombre valide",
-            });
-        }
-
         const user = await prisma.users.findUnique({
             where: { id: userId },
             select: { id: true, pp: true, banner: true, email: true, username: true, createdAt: true },
@@ -216,27 +200,21 @@ export const getUser = async (req: AuthenticatedRequest, res: Response) => {
 
         res.status(200).json({ ...user });
     } catch (error: any) {
-        res.status(error.status || 500).json({ message: error.message || "Erreur interne" });
+        next(error);
     }
 };
 
 //* PATCH
-// todo: find a way to show every error if there's multiple errors message
-export const editUsernameOrEmail = async (req: Request, res: Response) => {
-    const userId: string = req.params.userId;
-    const { username, email } = req.body;
+export const editUsernameOrEmail = async (req: Request, res: Response, next: NextFunction) => {
+    const userId: number = Number(req.params.userId);
+    const { username, email }: { username: string; email: string } = req.body;
+    const errors = [];
 
     const normalizedNewUsername: string = username.toLowerCase();
     const newEmail: string = email;
 
     try {
-        if (!userId || isNaN(parseInt(userId, 10)) || !username || !email) {
-            throw Object.assign(new Error(), {
-                status: 400,
-                message: "Paramètres de requête invalides",
-            });
-        }
-        const formerUser = await prisma.users.findUnique({ where: { id: parseInt(userId, 10) } });
+        const formerUser = await prisma.users.findUnique({ where: { id: userId } });
 
         if (!formerUser) {
             throw Object.assign(new Error(), {
@@ -252,10 +230,7 @@ export const editUsernameOrEmail = async (req: Request, res: Response) => {
             });
 
             if (existingUserWithNewUsername) {
-                throw Object.assign(new Error(), {
-                    status: 404,
-                    message: "Ce nom d'utilisateur n'est pas disponible",
-                });
+                errors.push({ message: "Ce nom d'utilisateur n'est pas disponible" });
             }
         }
 
@@ -266,11 +241,15 @@ export const editUsernameOrEmail = async (req: Request, res: Response) => {
             });
 
             if (existingUserWithNewEmail) {
-                throw Object.assign(new Error(), {
-                    status: 404,
-                    message: "Cette adresse e-mail n'est pas disponible",
-                });
+                errors.push({ message: "Cette adresse email n'est pas disponible" });
             }
+        }
+
+        if (errors.length > 0) {
+            throw Object.assign(new Error(), {
+                status: 400,
+                errors: errors,
+            });
         }
 
         // Update the user's username and email
@@ -289,30 +268,16 @@ export const editUsernameOrEmail = async (req: Request, res: Response) => {
 
         return res.status(200).json({ updatedUser });
     } catch (error: any) {
-        return res.status(error.status || 500).json({ message: error.message || "Erreur interne" });
+        next(error);
     }
 };
 
-export const editPassword = async (req: Request, res: Response) => {
-    const userId: string = req.params.userId;
+export const editPassword = async (req: Request, res: Response, next: NextFunction) => {
+    const userId: number = Number(req.params.userId);
     const { formerPassword, newPassword }: { formerPassword: string; newPassword: string } = req.body;
 
     try {
-        if (!userId || isNaN(parseInt(userId, 10)) || !formerPassword || !newPassword) {
-            throw Object.assign(new Error(), {
-                status: 400,
-                message: "Paramètres de requête invalides",
-            });
-        }
-
-        if (formerPassword === newPassword) {
-            throw Object.assign(new Error(), {
-                status: 400,
-                message: "Le nouveau mot de passe ne peut pas être identique au précédent",
-            });
-        }
-
-        const user = await prisma.users.findUnique({ where: { id: parseInt(userId, 10) } });
+        const user = await prisma.users.findUnique({ where: { id: userId } });
 
         if (!user) {
             throw Object.assign(new Error(), {
@@ -333,7 +298,7 @@ export const editPassword = async (req: Request, res: Response) => {
 
             await prisma.users.update({
                 where: {
-                    id: parseInt(userId, 10),
+                    id: userId,
                 },
                 data: {
                     password: hashedNewPassword,
@@ -345,41 +310,20 @@ export const editPassword = async (req: Request, res: Response) => {
             return res.status(204).send();
         }
     } catch (error: any) {
-        return res.status(error.status || 500).json({ message: error.message || "Erreur interne" });
+        next(error);
     }
 };
 
-export const editPicture = async (req: Request, res: Response) => {
-    const userId: string = req.params.userId;
+export const editPicture = async (req: Request, res: Response, next: NextFunction) => {
+    const userId: number = Number(req.params.userId);
     const pictureNumber: number = req.body.pictureNumber;
 
-    if (!userId || !pictureNumber) {
-        throw Object.assign(new Error(), {
-            status: 400,
-            message: "Des paramètres sont absents de la requête (param: userId, body: pictureNumber)",
-        });
-    }
-
-    if (isNaN(parseInt(userId, 10))) {
-        throw Object.assign(new Error(), {
-            status: 400,
-            message: "Le paramètre userId doit être un nombre valide",
-        });
-    }
-
     try {
-        if (pictureNumber < 1 || pictureNumber > 48) {
-            throw Object.assign(new Error(), {
-                status: 404,
-                message: "Image introuvable",
-            });
-        }
-
-        const newPicture = `/assets/avatars/Icon${req.body.pictureNumber}.png`;
+        const newPicture = `/assets/avatars/Icon${pictureNumber}.png`;
 
         const updatedUser = await prisma.users.update({
             where: {
-                id: parseInt(userId, 10),
+                id: userId,
             },
             data: {
                 pp: newPicture,
@@ -399,38 +343,17 @@ export const editPicture = async (req: Request, res: Response) => {
 
         return res.status(200).json({ updatedUser });
     } catch (error: any) {
-        return res.status(error.status || 500).json({ message: error.message || "Erreur interne" });
+        next(error);
     }
 };
 
 //* DELETE
-export const deleteUser = async (req: Request, res: Response) => {
-    const userId: string = req.params.userId;
-    const { password } = req.body;
+export const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
+    const userId: number = Number(req.params.userId);
+    const { password }: { password: string } = req.body;
 
     try {
-        if (!userId) {
-            throw Object.assign(new Error(), {
-                status: 400,
-                message: "Le paramètre userId est absent du corps de la requête",
-            });
-        }
-
-        if (isNaN(parseInt(userId, 10))) {
-            throw Object.assign(new Error(), {
-                status: 400,
-                message: "Le paramètre userId doit être un nombre valide",
-            });
-        }
-
-        if (!password) {
-            throw Object.assign(new Error(), {
-                status: 400,
-                message: "Mot de passe requis",
-            });
-        }
-
-        const user = await prisma.users.findUnique({ where: { id: parseInt(userId, 10) } });
+        const user = await prisma.users.findUnique({ where: { id: userId } });
 
         if (!user) {
             throw Object.assign(new Error(), {
@@ -450,22 +373,22 @@ export const deleteUser = async (req: Request, res: Response) => {
             await prisma.$transaction([
                 prisma.userSuccess.deleteMany({
                     where: {
-                        userId: parseInt(userId, 10),
+                        userId: userId,
                     },
                 }),
                 prisma.userTasks.deleteMany({
                     where: {
-                        userId: parseInt(userId, 10),
+                        userId: userId,
                     },
                 }),
                 prisma.yol.deleteMany({
                     where: {
-                        userId: parseInt(userId, 10),
+                        userId: userId,
                     },
                 }),
                 prisma.users.delete({
                     where: {
-                        id: parseInt(userId, 10),
+                        id: userId,
                     },
                 }),
             ]);
@@ -473,7 +396,7 @@ export const deleteUser = async (req: Request, res: Response) => {
             return res.status(204).send();
         }
     } catch (error: any) {
-        return res.status(error.status || 500).json({ message: error.message || "Erreur interne" });
+        next(error);
     }
 };
 
@@ -481,7 +404,7 @@ export default {
     signup,
     login,
     refreshAccessToken,
-    getUser,
+    getUserById,
     editUsernameOrEmail,
     editPassword,
     editPicture,

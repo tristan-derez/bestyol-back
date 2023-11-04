@@ -1,19 +1,12 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 
-import { prisma } from "../utils/prismaClient";
+import { prisma } from "../services/prismaClient";
 
 //* GET
-export const getAllUserSuccessByUserId = async (req: Request, res: Response) => {
+export const getAllUserSuccessByUserId = async (req: Request, res: Response, next: NextFunction) => {
     const userId: number = Number(req.params.userId);
 
     try {
-        if (!userId || isNaN(userId)) {
-            throw Object.assign(new Error(), {
-                status: 400,
-                message: "userId est absent de la requête ou n'est pas un nombre valide",
-            });
-        }
-
         const userSuccess = await prisma.userSuccess.findMany({
             where: {
                 userId: userId,
@@ -30,34 +23,20 @@ export const getAllUserSuccessByUserId = async (req: Request, res: Response) => 
             });
         }
 
-        return res.status(200).json({ userSuccess });
+        return res.status(200).json({ data: [{ userSuccess }] });
     } catch (error: any) {
-        return res.status(error.status || 500).json({ message: error.message || "Erreur interne" });
+        next(error);
     }
 };
 
 //* PATCH
-export const validateSuccess = async (req: Request, res: Response) => {
-    const userSuccessId: number = Number(req.params.id);
-    const yolId: number = req.body.yolId;
+export const validateSuccess = async (req: Request, res: Response, next: NextFunction) => {
+    const userSuccessId: number = Number(req.params.userSuccessId);
+    const yolId: number = Number(req.body.yolId);
 
     try {
-        if (!userSuccessId || isNaN(userSuccessId)) {
-            throw Object.assign(new Error(), {
-                status: 400,
-                message: "userSuccessId est absent de la requête ou n'est pas un nombre valide",
-            });
-        }
-
-        if (!yolId) {
-            throw Object.assign(new Error(), {
-                status: 400,
-                message: "yolId est absent du corps de la requête ou n'est pas un nombre valide",
-            });
-        }
-
         const userSuccess = await prisma.userSuccess.findUnique({
-            where: { id: userSuccessId },
+            where: { id: userSuccessId, isCompleted: false },
         });
 
         if (!userSuccess) {
@@ -67,15 +46,9 @@ export const validateSuccess = async (req: Request, res: Response) => {
             });
         }
 
-        if (userSuccess.isCompleted) {
-            throw Object.assign(new Error(), {
-                status: 400,
-                message: "Le succès utilisateur a déjà été complété",
-            });
-        }
-
         const matchingSuccess = await prisma.success.findUnique({
             where: { id: userSuccess.successId },
+            select: { id: true, amountNeeded: true, successXp: true },
         });
 
         if (!matchingSuccess) {
@@ -85,15 +58,11 @@ export const validateSuccess = async (req: Request, res: Response) => {
             });
         }
 
-        if (userSuccess && matchingSuccess) {
-            if (userSuccess.actualAmount !== matchingSuccess.amountNeeded) {
-                throw Object.assign(new Error(), {
-                    status: 400,
-                    message: "Le montant requis pour valider le succès n'a pas été atteint",
-                    "montant actuel": userSuccess.actualAmount,
-                    "montant requis": matchingSuccess.amountNeeded,
-                });
-            }
+        if (userSuccess.actualAmount < matchingSuccess.amountNeeded) {
+            throw Object.assign(new Error(), {
+                status: 400,
+                message: `Le montant requis pour valider le succès n'a pas été atteint, montant actuel: ${userSuccess.actualAmount}, montant demandé: ${matchingSuccess.amountNeeded}`,
+            });
         }
 
         await prisma.$transaction([
@@ -113,7 +82,7 @@ export const validateSuccess = async (req: Request, res: Response) => {
 
         return res.status(200).json({ yol: updatedYol });
     } catch (error: any) {
-        return res.status(error.status || 500).json({ message: error.message || "Erreur interne" });
+        next(error);
     }
 };
 

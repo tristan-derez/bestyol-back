@@ -1,12 +1,20 @@
 import express, { Router } from "express";
-import authToken from "../middlewares/verifyAuthToken";
+import { verifyAuthToken } from "../middlewares/verifyAuthToken";
 import idValidation from "../middlewares/idValidation";
 import validateSchema from "../middlewares/validateSchema";
 
 const router: Router = express.Router();
 
 import userController from "../controllers/User";
-import { SignUpSchema, LoginSchema, EditUsernameEmailSchema, EditUserPassword, EditUserPicture } from "../schemas/User";
+import {
+    SignUpSchema,
+    LoginSchema,
+    EditUsernameEmailSchema,
+    EditUserPasswordSchema,
+    EditUserPictureSchema,
+    DeleteUserSchema,
+    GetUserByIdSchema,
+} from "../schemas/User";
 
 //* POST
 router.post("/signup", validateSchema(SignUpSchema), userController.signup);
@@ -14,14 +22,18 @@ router.post("/login", validateSchema(LoginSchema), userController.login);
 router.post("/refreshTokens", userController.refreshAccessToken);
 
 //* GET
-router.get("/:userId", [authToken, idValidation], userController.getUser);
+router.get("/:userId", [validateSchema(GetUserByIdSchema), verifyAuthToken, idValidation], userController.getUserById);
 
 //* PATCH
-router.patch("/edit/username_email/:userId", [authToken, idValidation, validateSchema(EditUsernameEmailSchema)], userController.editUsernameOrEmail);
-router.patch("/edit/password/:userId", [authToken, idValidation, validateSchema(EditUserPassword)], userController.editPassword);
-router.patch("/edit/picture/:userId", [authToken, idValidation, validateSchema(EditUserPicture)], userController.editPicture);
+router.patch(
+    "/edit/username_email/:userId",
+    [validateSchema(EditUsernameEmailSchema), verifyAuthToken, idValidation],
+    userController.editUsernameOrEmail
+);
+router.patch("/edit/password/:userId", [validateSchema(EditUserPasswordSchema), verifyAuthToken, idValidation], userController.editPassword);
+router.patch("/edit/picture/:userId", [validateSchema(EditUserPictureSchema), verifyAuthToken, idValidation], userController.editPicture);
 
 //* DELETE
-router.delete("/delete/:userId", [authToken, idValidation], userController.deleteUser);
+router.delete("/delete/:userId", [validateSchema(DeleteUserSchema), verifyAuthToken, idValidation], userController.deleteUser);
 
 export default router;

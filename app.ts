@@ -29,4 +29,19 @@ app.use("/api/user-tasks", userTasks);
 app.use("/api/yol", yolRoutes);
 app.use("/api/species", speciesRoutes);
 
+app.use((error: any, _req: Request, res: Response, _next: NextFunction) => {
+    const statusCode = error.status || 500;
+    let errorResponse;
+
+    if (Array.isArray(error.errors)) {
+        errorResponse = { erreurs: error.errors };
+    } else if (error.message) {
+        errorResponse = { erreur: error.message };
+    } else {
+        errorResponse = { message: "Une erreur est survenue" };
+    }
+
+    res.status(statusCode).json(errorResponse);
+});
+
 export default app;

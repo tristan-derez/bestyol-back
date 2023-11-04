@@ -13,13 +13,31 @@ export default (req: AuthenticatedRequest, res: Response, next: NextFunction) =>
         const decodedToken = jwt.verify(token, process.env.JWT_TOKEN as string) as JwtPayload & { userId: string };
         req.userId = decodedToken.userId;
 
-        const requestedUserId: number = parseInt(req.params.userId, 10);
-        if (parseInt(req.userId, 10) !== requestedUserId) {
-            return res.status(403).json({ message: "Vous n'êtes pas autorisé à effectuer cette action" });
+        if (req.params.userId) {
+            const requestedUserId: number = parseInt(req.params.userId, 10);
+            if (parseInt(req.userId, 10) !== requestedUserId) {
+                throw Object.assign(new Error(), {
+                    status: 403,
+                    message: "Accès non autorisé",
+                });
+            }
+        } else if (req.body.userId) {
+            const requestedUserId: number = parseInt(req.body.userId, 10);
+            if (parseInt(req.userId, 10) !== requestedUserId) {
+                throw Object.assign(new Error(), {
+                    status: 403,
+                    message: "Accès non autorisé",
+                });
+            }
+        } else {
+            throw Object.assign(new Error(), {
+                status: 400,
+                message: "userId non spécifié",
+            });
         }
 
         next();
-    } catch (error) {
-        res.status(500).json({ message: "Erreur interne" });
+    } catch (error: any) {
+        next(error);
     }
 };

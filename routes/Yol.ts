@@ -1,19 +1,20 @@
 import express, { Router } from "express";
-import authToken from "../middlewares/verifyAuthToken";
+import { verifyAuthToken } from "../middlewares/verifyAuthToken";
 import yolController from "../controllers/Yol";
 import validateSchema from "../middlewares/validateSchema";
-import { nameYolSchema } from "../schemas/Yol";
+import { CreateYolSchema, EvolveYolSchema, GetOneYolByUserIdSchema, GetOneYolSchema } from "../schemas/Yol";
+import idValidation from "../middlewares/idValidation";
 
 const router: Router = express.Router();
 
 //* POST
-router.post("/create", [authToken, validateSchema(nameYolSchema)], yolController.createYol);
+router.post("/create", [validateSchema(CreateYolSchema), verifyAuthToken, idValidation], yolController.createYol);
 
 //* GET
-router.get("/:yolId", authToken, yolController.getOneYol);
-router.get("/user/:userId", authToken, yolController.getOneYolByUserId);
+router.get("/:yolId", [validateSchema(GetOneYolSchema), verifyAuthToken], yolController.getOneYol);
+router.get("/user/:userId", [validateSchema(GetOneYolByUserIdSchema), verifyAuthToken], yolController.getOneYolByUserId);
 
 //* PATCH
-router.patch("/evolve/:yolId", authToken, yolController.evolve);
+router.patch("/evolve/:yolId", [validateSchema(EvolveYolSchema), verifyAuthToken], yolController.evolveYol);
 
 export default router;

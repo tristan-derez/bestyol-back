@@ -1,9 +1,9 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 
-import { prisma, Success } from "../utils/prismaClient";
+import { prisma, Success } from "../services/prismaClient";
 
 //* GET
-export const getAllSuccess = async (_req: Request, res: Response) => {
+export const getAllSuccess = async (_req: Request, res: Response, next: NextFunction) => {
     try {
         const success: Success[] = await prisma.success.findMany();
 
@@ -14,24 +14,17 @@ export const getAllSuccess = async (_req: Request, res: Response) => {
             });
         }
 
-        return res.status(200).json({ success });
+        return res.status(200).json({ data: [{ success }] });
     } catch (error: any) {
-        return res.status(error.status || 500).json({ message: error.message || "Erreur interne" });
+        next(error);
     }
 };
 
-export const getOneSuccess = async (req: Request, res: Response) => {
-    const successId: number = Number(req.params.id);
+export const getOneSuccess = async (req: Request, res: Response, next: NextFunction) => {
+    const successId: number = Number(req.params.successId);
 
     try {
-        if (!successId || isNaN(successId)) {
-            throw Object.assign(new Error(), {
-                status: 400,
-                message: "successId est absent de la requête ou n'est pas un nombre valide",
-            });
-        }
-
-        const success = await prisma.success.findUnique({ where: { id: successId } });
+        const success: Success | null = await prisma.success.findUnique({ where: { id: successId } });
 
         if (!success) {
             throw Object.assign(new Error(), {
@@ -42,7 +35,7 @@ export const getOneSuccess = async (req: Request, res: Response) => {
 
         return res.status(200).json({ ...success });
     } catch (error: any) {
-        return res.status(error.status || 500).json({ message: error.message || "Erreur interne" });
+        next(error);
     }
 };
 
