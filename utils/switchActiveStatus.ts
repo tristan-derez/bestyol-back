@@ -1,7 +1,7 @@
 import { startOfDay } from "date-fns";
 import { getRandomElements } from "./getRandomElements";
 
-import { prisma, DailyTasks } from "./prismaClient";
+import { prisma, DailyTasks } from "../services/prismaClient";
 
 export async function newActiveDaily(count: number) {
     try {

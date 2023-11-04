@@ -1,4 +1,4 @@
-import { prisma } from "./prismaClient";
+import { prisma } from "../services/prismaClient";
 
 export async function createUserSuccess(userId: number) {
     try {

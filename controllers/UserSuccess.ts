@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 
-import { prisma } from "../utils/prismaClient";
+import { prisma } from "../services/prismaClient";
 
 //* GET
 export const getAllUserSuccessByUserId = async (req: Request, res: Response) => {

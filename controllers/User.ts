@@ -4,7 +4,7 @@ import jwt, { JwtPayload } from "jsonwebtoken";
 
 import { AuthenticatedRequest } from "../middlewares/idValidation";
 
-import { Users, prisma } from "../utils/prismaClient";
+import { Users, prisma } from "../services/prismaClient";
 import { generateAccessToken } from "../utils/auth/generateAccessToken";
 
 //* POST

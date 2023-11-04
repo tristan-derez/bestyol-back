@@ -1,5 +1,5 @@
 import { Yol } from "@prisma/client";
-import { prisma } from "./prismaClient";
+import { prisma } from "../services/prismaClient";
 
 export const checkYolXpToValidateSuccess = async (userId: number, yol: Yol[]) => {
     const xpToReachLevelThree = 250;

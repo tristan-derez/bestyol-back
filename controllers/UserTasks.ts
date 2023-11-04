@@ -3,7 +3,7 @@ import { startOfDay, endOfDay } from "date-fns";
 import { newActiveDaily } from "../utils/switchActiveStatus";
 import { AuthenticatedRequest } from "../middlewares/idValidation";
 
-import { prisma, DailyTasks, UserTasks } from "../utils/prismaClient";
+import { prisma, DailyTasks, UserTasks } from "../services/prismaClient";
 
 //* POST
 export const createUserCustomTask = async (req: AuthenticatedRequest, res: Response) => {

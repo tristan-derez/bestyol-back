@@ -1,4 +1,4 @@
-import { prisma } from "./prismaClient";
+import { prisma } from "../services/prismaClient";
 
 export async function incrementEvolveSuccess(userId: number, formerStage: string) {
     const errorSuccess = "Erreur au moment d'incrémenter le succès utilisateur : succès correspondant à l'évolution introuvable";
