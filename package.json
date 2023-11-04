@@ -11,7 +11,6 @@
         "singleQuote": false,
         "printWidth": 150
     },
-    "description": "",
     "main": "dist/server.js",
     "scripts": {
         "build": "npx tsc",
@@ -19,8 +18,8 @@
         "dev": "nodemon server.ts",
         "dockerize": "docker build -t bestyol-back . && docker-compose up -d"
     },
-    "keywords": [],
-    "author": "",
+    "author": "tristan-derez",
+    "description": "Bestyol backend",
     "license": "ISC",
     "dependencies": {
         "@prisma/client": "^5.4.2",
