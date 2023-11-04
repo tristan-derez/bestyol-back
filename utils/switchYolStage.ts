@@ -1,7 +1,12 @@
+import { Species, Yol } from "@prisma/client";
 import { incrementEvolveSuccess } from "./incrementEvolveSuccess";
-import { prisma } from "./prismaClient";
+import { prisma } from "../services/prismaClient";
 
-export const switchYolStage = async (yolId: number, yol: any) => {
+interface YolWithSpecies extends Yol {
+    species: Species;
+}
+
+export const switchYolStage = async (yolId: number, yol: YolWithSpecies) => {
     try {
         switch (yol.species.stage) {
             case "Egg":
@@ -103,7 +108,7 @@ export const switchYolStage = async (yolId: number, yol: any) => {
                 }
 
             case "Final":
-                return "Le Yol a atteint sa forme finale. Il ne peut plus évoluer.";
+                return { message: "Le Yol a atteint sa forme finale. Il ne peut plus évoluer.", newSpecies: yol.species };
 
             default:
                 return;
