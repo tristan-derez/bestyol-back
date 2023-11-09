@@ -6,6 +6,7 @@ import { AuthenticatedRequest } from "../middlewares/idValidation";
 
 import { Users, prisma } from "../services/prismaClient";
 import { generateAccessToken } from "../utils/auth/generateAccessToken";
+import logger from "../utils/logger";
 
 //* POST
 export const signup = async (req: Request, res: Response, next: NextFunction) => {
@@ -88,6 +89,7 @@ export const signup = async (req: Request, res: Response, next: NextFunction) =>
         }
 
         const accessToken = await generateAccessToken(createdUser.id);
+        logger.info("This is an info log message.");
 
         return res.status(201).json({
             user: createdUser,
