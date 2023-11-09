@@ -5,18 +5,29 @@ import path from "path";
 
 // Define the directory and filename pattern for log rotation
 const logDirectory = path.join(__dirname, "../logs");
-const logFileName = "app.log";
+
+const pad = (num: number): string => (num > 9 ? "" : "0") + num;
+
+const generator = (time: Date | null, index: number): string => {
+    if (!time) return "file.log";
+
+    const month = `${time.getFullYear()}${pad(time.getMonth() + 1)}`;
+    const day = pad(time.getDate());
+    const hour = pad(time.getHours());
+    const minute = pad(time.getMinutes());
+
+    return `${month}/${month}${day}-${hour}${minute}-${index}-file.log`;
+};
 
 // Create a rotating file stream for log rotation and cleanup
-const logStream = rfs.createStream(logFileName, {
-    interval: "1d", // Rotate logs daily
+const logStream = rfs.createStream(generator, {
+    interval: "1d",
+    size: "10M",
     path: logDirectory,
-    maxFiles: 7, // Keep up to 7 days of logs (adjust as needed)
+    maxFiles: 7,
     compress: true,
 });
 
-// Create a Pino logger instance with the rotating file stream as the destination
 const logger = pino({ level: "info" }, logStream);
 
-// Export the logger for use in other modules if needed
 export default logger;
