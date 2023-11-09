@@ -89,7 +89,6 @@ export const signup = async (req: Request, res: Response, next: NextFunction) =>
         }
 
         const accessToken = await generateAccessToken(createdUser.id);
-        logger.info("This is an info log message.");
 
         return res.status(201).json({
             user: createdUser,
