@@ -7,6 +7,7 @@ import userSuccessRoutes from "./routes/UserSuccess";
 import userTasks from "./routes/UserTasks";
 import yolRoutes from "./routes/Yol";
 import speciesRoutes from "./routes/Species";
+import logger from "./utils/logger";
 
 const app: Express = express();
 
@@ -35,9 +36,12 @@ app.use((error: any, _req: Request, res: Response, _next: NextFunction) => {
 
     if (Array.isArray(error.errors)) {
         errorResponse = { erreurs: error.errors };
+        logger.error(error.errors);
     } else if (error.message) {
+        logger.error(error.message);
         errorResponse = { erreur: error.message };
     } else {
+        logger.error("Une erreur est survenue");
         errorResponse = { message: "Une erreur est survenue" };
     }
 
